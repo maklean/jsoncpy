@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/loader.h"
+#include "include/scanner.h"
+#include "include/utils.h"
 
 int main() {
     char *file_path = "../test.json";
 
-    char *content = load_file(file_path);
+    scan_result *sr = scan(file_path);
+    if(!sr) {
+        return 0;
+    }
 
-    printf("%s\n", content);
-
-    free(content);
+    free_scan_result(sr);
 
     return 0;
 }
