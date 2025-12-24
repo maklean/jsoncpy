@@ -115,7 +115,7 @@ token *fetch_tokens(json_file *jf) {
                 t.value[j] = jf->content[i];
                 j++;
                 i++;
-            } while(i < jf->length && isdigit(jf->content[i]));
+            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.')); // TODO: This will technically allow stuff like 5......10, throw some kind of error here.
             t.value[j] = '\0';
 
             should_inc = 0;
