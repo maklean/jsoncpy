@@ -80,11 +80,11 @@ token *fetch_tokens(json_file *jf) {
             strcpy(t.value, "]");
         } 
         else if (c == ':') {
-            t.type = NAME_SEPERATOR;
+            t.type = NAME_SEPARATOR;
             strcpy(t.value, ":");
         } 
         else if (c == ',') {
-            t.type = VALUE_SEPERATOR;
+            t.type = VALUE_SEPARATOR;
             strcpy(t.value, ",");
         }
         else if (c == '"') {

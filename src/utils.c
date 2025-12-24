@@ -35,10 +35,10 @@ const char *token_type_to_str(token_type t) {
             return "BEGIN_OBJECT";
         case END_OBJECT:
             return "END_OBJECT";
-        case NAME_SEPERATOR:
-            return "NAME_SEPERATOR";
-        case VALUE_SEPERATOR:
-            return "VALUE_SEPERATOR";
+        case NAME_SEPARATOR:
+            return "NAME_SEPARATOR";
+        case VALUE_SEPARATOR:
+            return "VALUE_SEPARATOR";
         case LT_FALSE:
             return "LT_FALSE";
         case LT_TRUE:
