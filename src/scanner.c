@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
@@ -52,7 +53,7 @@ token *fetch_tokens(json_file *jf) {
     }
 
     token *tokens = NULL;
-    size_t token_size = 0;
+    size_t token_count = 0;
 
     char c;
     size_t i = 0;
@@ -95,19 +96,29 @@ token *fetch_tokens(json_file *jf) {
                 i++;
             }
             t.value[j] = '\0';
+        } 
+        else if(isdigit(c)) {
+            t.type = NUMBER;
+            size_t j = 0;
+            do {
+                t.value[j] = jf->content[i];
+                j++;
+                i++;
+            } while(i < jf->length && isdigit(jf->content[i]));
+            t.value[j] = '\0';
         } else {
             // whitespace (or the other tokens I'm not processing atm)
             i++;
             continue;
         }
 
-        tokens = realloc(tokens, sizeof(token) * (++token_size));
+        tokens = realloc(tokens, sizeof(token) * (++token_count));
         if(!tokens) {
             return NULL;
         }
-        tokens[token_size-1] = t;
+        tokens[token_count-1] = t;
 
-        printf("\nType: %d\nValue: '%s'\n", t.type, t.value);
+        printf("\nType: %s\nValue: '%s'\n", token_type_to_str(t.type), t.value);
 
         i++;
     }
