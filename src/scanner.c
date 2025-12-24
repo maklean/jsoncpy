@@ -9,8 +9,8 @@
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
 
-// Returns an array of tokens for the given json file.
-static token *fetch_tokens(json_file *jf);
+// Returns a scan result from the given json jile.
+static scan_result *build_scan_result(json_file *jf);
 
 scan_result *scan(const char *json_file_dir) {
     if(!json_file_dir) {
@@ -31,22 +31,16 @@ scan_result *scan(const char *json_file_dir) {
         return NULL;
     }
 
-    scan_result *sr = calloc(1, sizeof(scan_result));
+    scan_result *sr = build_scan_result(jf);
     if(!sr) {
-        perror("Failed to allocate for scan_result struct object");
-        free(jf->content);
-        free(jf);
+        free_json_file(jf);
         return NULL;
     }
-
-    sr->tokens = fetch_tokens(jf);
-
-    sr->json_file = jf;
 
     return sr;
 }
 
-token *fetch_tokens(json_file *jf) {
+scan_result *build_scan_result(json_file *jf) {
     if(!jf) {
         fprintf(stderr, "Invalid json_file struct object given.\n");
         return NULL;
@@ -111,13 +105,23 @@ token *fetch_tokens(json_file *jf) {
 
             // concatenate number into token value string until we see a non digit character
             size_t j = 0;
+            int seen_decimal = 0;
             do {
+                if(jf->content[i] == '.') {
+                    if(seen_decimal) {
+                        fprintf(stderr, "Invalid token: '.'\n");
+                        if(tokens) free(tokens);
+                        return NULL;
+                    }
+
+                    seen_decimal = 1;
+                } 
                 t.value[j] = jf->content[i];
                 j++;
                 i++;
-            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.')); // TODO: This will technically allow stuff like 5......10, throw some kind of error here.
-            t.value[j] = '\0';
+            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.'));
 
+            t.value[j] = '\0';
             should_inc = 0;
         } 
         else if(isalpha(c)) {
@@ -137,7 +141,9 @@ token *fetch_tokens(json_file *jf) {
             } else if(strcmp(t.value, "null") == 0) {
                 t.type = LT_NULL;
             } else {
-                t.type = UNKNOWN;
+                fprintf(stderr, "Invalid token: '%s'.\n", t.value);
+                if(tokens) free(tokens);
+                return NULL;
             }
 
             should_inc = 0;
@@ -160,11 +166,17 @@ token *fetch_tokens(json_file *jf) {
         if(should_inc) i++;
     }
 
-    for(size_t i = 0; i < token_count; i++) {
-        printf("\nType: %s\nValue: '%s'\n", token_type_to_str(tokens[i].type), tokens[i].value);
+    scan_result *sr = calloc(1, sizeof(scan_result));
+    if(!sr) {
+        perror("Failed to allocate for scan_result struct object");
+        return NULL;
     }
 
-    return tokens;
+    sr->tokens = tokens;
+    sr->token_count = token_count;
+    sr->json_file = jf;
+
+    return sr;
 }
 
 json_file *get_json_file(const char *dir) {
