@@ -88,7 +88,14 @@ token *fetch_tokens(json_file *jf) {
         else if (c == '"') {
             t.type = STRING;
             
-            i++;
+            i++; // to go after the first double quote
+
+            /*
+                concatenate character into token value string until another double quote is reached
+
+                TODO: this would lowk break if I had an escape character with the double quote in there (e.g. \"),
+                I should probably fix this.
+            */
             size_t j = 0;
             while(i < jf->length && (c = jf->content[i]) != '"') {
                 t.value[j] = c;
@@ -99,6 +106,8 @@ token *fetch_tokens(json_file *jf) {
         } 
         else if(isdigit(c)) {
             t.type = NUMBER;
+
+            // concatenate number into token value string until we see a non digit character
             size_t j = 0;
             do {
                 t.value[j] = jf->content[i];
