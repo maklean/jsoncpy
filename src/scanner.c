@@ -53,6 +53,7 @@ token *fetch_tokens(json_file *jf) {
     }
 
     token *tokens = NULL;
+    token *tmp_tokens;
     size_t token_count = 0;
 
     char c;
@@ -60,6 +61,7 @@ token *fetch_tokens(json_file *jf) {
     while(i < jf->length) {
         c = jf->content[i];
         
+        int should_inc = 1;
         token t;
         if (c == '{') {
             t.type = BEGIN_OBJECT;
@@ -115,21 +117,51 @@ token *fetch_tokens(json_file *jf) {
                 i++;
             } while(i < jf->length && isdigit(jf->content[i]));
             t.value[j] = '\0';
+
+            should_inc = 0;
+        } 
+        else if(isalpha(c)) {
+            // it can be any of these three literals: false, true, null
+            size_t j = 0;
+            do {
+                t.value[j] = jf->content[i];
+                j++;
+                i++;
+            } while(i < jf->length && isalpha(jf->content[i]));
+            t.value[j] = '\0';
+
+            if(strcmp(t.value, "false") == 0) {
+                t.type = LT_FALSE;
+            } else if(strcmp(t.value, "true") == 0) {
+                t.type = LT_TRUE;
+            } else if(strcmp(t.value, "null") == 0) {
+                t.type = LT_NULL;
+            } else {
+                t.type = UNKNOWN;
+            }
+
+            should_inc = 0;
         } else {
-            // whitespace (or the other tokens I'm not processing atm)
             i++;
             continue;
         }
 
-        tokens = realloc(tokens, sizeof(token) * (++token_count));
-        if(!tokens) {
+        // resize array to accommodate new token
+        tmp_tokens = realloc(tokens, sizeof(token) * (++token_count));
+        if(!tmp_tokens) {
+            perror("Failed to reallocate memory for tokens array");
+            free(tokens);
             return NULL;
         }
+
+        tokens = tmp_tokens;
         tokens[token_count-1] = t;
 
-        printf("\nType: %s\nValue: '%s'\n", token_type_to_str(t.type), t.value);
+        if(should_inc) i++;
+    }
 
-        i++;
+    for(size_t i = 0; i < token_count; i++) {
+        printf("\nType: %s\nValue: '%s'\n", token_type_to_str(tokens[i].type), tokens[i].value);
     }
 
     return tokens;
