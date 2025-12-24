@@ -5,7 +5,6 @@
 
 // Follows the JSON Grammar defined in RFC8259 (Source: https://datatracker.ietf.org/doc/html/rfc8259#section-2)
 typedef enum token_type_e {
-    UNKNOWN,
     BEGIN_ARRAY,
     END_ARRAY,
     BEGIN_OBJECT,
