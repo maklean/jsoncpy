@@ -109,7 +109,8 @@ scan_result *build_scan_result(json_file *jf) {
             do {
                 if(jf->content[i] == '.') {
                     if(seen_decimal) {
-                        fprintf(stderr, "Invalid token: '.'\n");
+                        t.value[j] = '\0';
+                        fprintf(stderr, "Invalid Number: %s. <---\n", t.value);
                         if(tokens) free(tokens);
                         return NULL;
                     }
@@ -141,13 +142,20 @@ scan_result *build_scan_result(json_file *jf) {
             } else if(strcmp(t.value, "null") == 0) {
                 t.type = LT_NULL;
             } else {
-                fprintf(stderr, "Invalid token: '%s'.\n", t.value);
+                fprintf(stderr, "Invalid identifier: '%s'.\n", t.value);
                 if(tokens) free(tokens);
                 return NULL;
             }
 
             should_inc = 0;
         } else {
+            // only characters that should be in random places are whitespaces, newlines and carriage returns
+            if(c != ' ' && c != '\n' && c != '\r') {
+                fprintf(stderr, "Invalid character found: %c.\n", c);
+                if(tokens) free(tokens);
+                return NULL;
+            }
+
             i++;
             continue;
         }
