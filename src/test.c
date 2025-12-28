@@ -3,6 +3,7 @@
 #include "include/scanner.h"
 #include "include/utils.h"
 #include "include/debug.h"
+#include "include/parser.h"
 
 int main() {
     char *file_path = "../test.json";
@@ -14,6 +15,8 @@ int main() {
     }
 
     debug_scan_result(sr);
+
+    parse(sr);
 
     free_scan_result(sr);
 

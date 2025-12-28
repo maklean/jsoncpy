@@ -137,8 +137,10 @@ scan_result *build_scan_result(json_file *jf) {
 
             if(strcmp(t.value, "false") == 0) {
                 t.type = LT_FALSE;
+                strcpy(t.value, "0");
             } else if(strcmp(t.value, "true") == 0) {
                 t.type = LT_TRUE;
+                strcpy(t.value, "1");
             } else if(strcmp(t.value, "null") == 0) {
                 t.type = LT_NULL;
             } else {

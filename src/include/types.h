@@ -18,6 +18,15 @@ typedef enum token_type_e {
     NUMBER
 } token_type;
 
+typedef enum node_type_e {
+    NODE_OBJECT,
+    NODE_ARRAY,
+    NODE_STRING,
+    NODE_NUMBER,
+    NODE_BOOLEAN,
+    NODE_NULL
+} node_type;
+
 typedef struct token_s {
     token_type type;
     char value[513]; // 512 bytes for each token value for now...
@@ -34,5 +43,15 @@ typedef struct scan_result_s {
     token *tokens;
     size_t token_count;
 } scan_result;
+
+typedef struct node_s {
+    node_type type;
+    void *value;
+} node;
+
+typedef struct kv_pair_s {
+    char key[513];
+    void *value;
+} kv_pair;
 
 #endif
