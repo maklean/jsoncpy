@@ -100,7 +100,7 @@ scan_result *build_scan_result(json_file *jf) {
             }
             t.value[j] = '\0';
         } 
-        else if(isdigit(c)) {
+        else if(isdigit(c) || c == '-' && i+1 < jf->length && isdigit(jf->content[i+1])) {
             t.type = NUMBER;
 
             // concatenate number into token value string until we see a non digit character
@@ -116,7 +116,13 @@ scan_result *build_scan_result(json_file *jf) {
                     }
 
                     seen_decimal = 1;
-                } 
+                } else if(jf->content[i] == '-' && j != 0) {
+                    t.value[j] = '\0';
+                    fprintf(stderr, "Invalid Negation Postion: %s. <---\n", t.value);
+                    if(tokens) free(tokens);
+                    return NULL;
+                }
+
                 t.value[j] = jf->content[i];
                 j++;
                 i++;

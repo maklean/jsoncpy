@@ -12,56 +12,51 @@ static int parse_array(node *n);
 static size_t current;
 static token *stream = NULL;
 
-// written by gpt bc I'm too lazy to finish the night by writing my own traversing function.
 static void traverse_node(node *n, int depth) {
     if (!n) return;
 
     // indent
     for (int i = 0; i < depth; i++) printf("  ");
 
+    collection *coll;
+
     switch (n->type) {
         case NODE_STRING:
             printf("STRING: %s\n", (char *)n->value);
             break;
-
         case NODE_NUMBER_INT:
             printf("NUMBER (INT): %d\n", *(int *)n->value);
             break;
-
         case NODE_NUMBER_FLOAT:
             printf("NUMBER (FLOAT): %f\n", *(double *)n->value);
             break;
-
         case NODE_BOOLEAN:
             printf("BOOLEAN: %s\n", *(int *)n->value ? "true" : "false");
             break;
-
         case NODE_NULL:
             printf("NULL\n");
             break;
+        case NODE_OBJECT:
+            coll = (collection *)n->value;
 
-        case NODE_OBJECT: {
-            printf("OBJECT {\n");
+            printf("OBJECT (Length: %ld) {\n", coll->length);
 
-            kv_pair *pairs = (kv_pair *)n->value;
-            size_t i = 0;
+            kv_pair *pairs = (kv_pair *)coll->collection;
 
-            while (pairs && pairs[i].key[0] != '\0') {
+            for(size_t i = 0; i < coll->length; i++) {
                 for (int j = 0; j < depth + 1; j++) printf("  ");
                 printf("KEY: %s\n", pairs[i].key);
 
-                traverse_node(pairs[i].value, depth + 2);
-                i++;
+                traverse_node((node *)pairs[i].value, depth + 2);
             }
 
             for (int i = 0; i < depth; i++) printf("  ");
             printf("}\n");
             break;
-        }
+        case NODE_ARRAY:
+            coll = (collection *)n->value;
 
-        case NODE_ARRAY: {
-            printf("ARRAY [\n");
-            collection *coll = (collection *)n->value;
+            printf("ARRAY (Length: %ld) [\n", coll->length);
 
             node *arr = (node *)coll->collection;
 
@@ -73,8 +68,6 @@ static void traverse_node(node *n, int depth) {
             printf("]\n");
 
             break;
-        }
-
         default:
             printf("UNKNOWN NODE\n");
     }
@@ -159,6 +152,7 @@ static int parse_object(node *n) {
 
     n->type = NODE_OBJECT;
     n->value = NULL;
+    kv_pair *coll = NULL;
     size_t i = 0;
 
     token t = stream[++current]; // move past '{'
@@ -182,8 +176,8 @@ static int parse_object(node *n) {
                 return -1;
             }
 
-            n->value = realloc(n->value, sizeof(kv_pair)*(i+1));
-            ((kv_pair *)n->value)[i++] = pair;
+            coll = realloc(coll, sizeof(kv_pair)*(i+1));
+            coll[i++] = pair;
         } else {
             fprintf(stderr, "Expected String.\n");
             return -1;
@@ -192,6 +186,10 @@ static int parse_object(node *n) {
         t = stream[++current];
         if(t.type == VALUE_SEPARATOR) t = stream[++current];
     }
+
+    n->value = malloc(sizeof(collection));
+    ((collection*)n->value)->collection = (void *)coll;
+    ((collection*)n->value)->length = i;
 
     return 0;
 }
@@ -249,7 +247,7 @@ static int parse_array(node *n) {
     }
 
     n->value = malloc(sizeof(collection));
-    ((collection *)n->value)->collection = coll;
+    ((collection *)n->value)->collection = (void *)coll;
     ((collection *)n->value)->length = length;
 
     return 0;
