@@ -7,6 +7,7 @@ static token *next_token(token *t_stream);
 
 static int parse_value(node *n);
 static int parse_object(node *n);
+static int parse_array(node *n);
 
 static size_t current;
 static token *stream = NULL;
@@ -54,9 +55,21 @@ static void traverse_node(node *n, int depth) {
             break;
         }
 
-        case NODE_ARRAY:
-            printf("ARRAY (not implemented)\n");
+        case NODE_ARRAY: {
+            printf("ARRAY [\n");
+            collection *coll = (collection *)n->value;
+
+            node *arr = (node *)coll->collection;
+
+            for(size_t i = 0; i < coll->length; i++) {
+                traverse_node(&arr[i], depth+2);
+            }
+
+            for (int i = 0; i < depth; i++) printf("  ");
+            printf("]\n");
+
             break;
+        }
 
         default:
             printf("UNKNOWN NODE\n");
@@ -75,8 +88,6 @@ node *parse(scan_result *sr) {
 
     node n;
     parse_value(&n);
-
-    printf("NODE TYPE: %d\n", n.type);
 
     // traverse everything and print here.
     traverse_node(&n, 0);
@@ -124,7 +135,7 @@ static int parse_value(node *n) {
         case BEGIN_OBJECT:
             return parse_object(n);
         case BEGIN_ARRAY:
-            return 0;
+            return parse_array(n);
     }
 
     fprintf(stderr, "Unable to parse value.\n");
@@ -172,6 +183,65 @@ static int parse_object(node *n) {
         t = stream[++current];
         if(t.type == VALUE_SEPARATOR) t = stream[++current];
     }
+
+    return 0;
+}
+
+static int parse_array(node *n) {
+    if(!n) {
+        fprintf(stderr, "Invalid pointer to node struct given.\n");
+        return -1;
+    }
+
+    n->type = NODE_ARRAY;
+    n->value = NULL;
+
+    node *coll = NULL;
+    size_t i = 0;
+    size_t length = 0;
+
+    token t = stream[++current]; // move past '['
+
+    while(t.type != END_ARRAY) {
+        if(t.type == VALUE_SEPARATOR) {
+            if(i % 2 != 1) {
+                fprintf(stderr, "Unexpected value seperator at position %ld.\n", current-1);
+                return -1;
+            }
+
+            // move on to the next token
+            t = stream[++current];
+
+            // there should be a new value
+            if(t.type == END_ARRAY) {
+                fprintf(stderr, "Expected value at position %ld, got end of array.\n", current-1);
+                return -1;
+            }
+
+            i++;
+        } else {
+            if(i % 2 != 0) {
+                fprintf(stderr, "Unexpected value at position %ld, expected value seperator.\n", current-1);
+                return -1;
+            }
+
+            node arr_val;
+
+            if(parse_value(&arr_val) != 0) {
+                return -1;
+            }
+
+            coll = realloc(coll, sizeof(node)*(length+1));
+            coll[length++] = arr_val;
+            t = stream[++current];
+
+            i++;
+        }
+    }
+
+    n->value = malloc(sizeof(collection));
+    ((collection *)n->value)->collection = coll;
+    ((collection *)n->value)->length = length;
 
     return 0;
 }

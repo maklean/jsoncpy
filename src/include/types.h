@@ -54,4 +54,9 @@ typedef struct kv_pair_s {
     void *value;
 } kv_pair;
 
+typedef struct collection_s {
+    void *collection;
+    size_t length;
+} collection;
+
 #endif
