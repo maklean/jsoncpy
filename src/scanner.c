@@ -126,7 +126,7 @@ scan_result *build_scan_result(json_file *jf) {
                 t.value[j] = jf->content[i];
                 j++;
                 i++;
-            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.'));
+            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.' || jf->content[i] == '-'));
 
             t.value[j] = '\0';
             should_inc = 0;

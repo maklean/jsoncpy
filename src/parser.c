@@ -84,7 +84,9 @@ node *parse(scan_result *sr) {
     stream = sr->tokens;
 
     node n;
-    parse_value(&n);
+    if(parse_value(&n) != 0) {
+        return NULL;
+    }
 
     // traverse everything and print here.
     traverse_node(&n, 0);
@@ -179,12 +181,19 @@ static int parse_object(node *n) {
             coll = realloc(coll, sizeof(kv_pair)*(i+1));
             coll[i++] = pair;
         } else {
-            fprintf(stderr, "Expected String.\n");
+            fprintf(stderr, "Expected object key at position %ld.\n", current-1);
             return -1;
         }
 
         t = stream[++current];
-        if(t.type == VALUE_SEPARATOR) t = stream[++current];
+        if(t.type == VALUE_SEPARATOR) {
+            t = stream[++current];
+
+            if(t.type == END_OBJECT) {
+                fprintf(stderr, "Expected object key at position %ld.\n", current-1);
+                return -1;
+            }
+        }
     }
 
     n->value = malloc(sizeof(collection));
