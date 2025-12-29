@@ -22,7 +22,8 @@ typedef enum node_type_e {
     NODE_OBJECT,
     NODE_ARRAY,
     NODE_STRING,
-    NODE_NUMBER,
+    NODE_NUMBER_INT,
+    NODE_NUMBER_FLOAT,
     NODE_BOOLEAN,
     NODE_NULL
 } node_type;

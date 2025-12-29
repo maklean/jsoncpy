@@ -24,8 +24,12 @@ static void traverse_node(node *n, int depth) {
             printf("STRING: %s\n", (char *)n->value);
             break;
 
-        case NODE_NUMBER:
-            printf("NUMBER: %d\n", *(int *)n->value);
+        case NODE_NUMBER_INT:
+            printf("NUMBER (INT): %d\n", *(int *)n->value);
+            break;
+
+        case NODE_NUMBER_FLOAT:
+            printf("NUMBER (FLOAT): %f\n", *(double *)n->value);
             break;
 
         case NODE_BOOLEAN:
@@ -117,15 +121,20 @@ static int parse_value(node *n) {
         case NUMBER:
         case LT_TRUE:
         case LT_FALSE:
-            n->type = t.type == NUMBER ? NODE_NUMBER : NODE_BOOLEAN;
-            n->value = malloc(sizeof(int));
+            int is_float = strchr(t.value, '.') != NULL;
+            n->type = t.type == NUMBER ? (is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT) : NODE_BOOLEAN;
+            n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(int));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
                 return -1;
             }
 
-            *(int *)n->value = atoi(t.value);
+            if(n->type == NODE_NUMBER_FLOAT) {
+                *(double *)n->value = strtod(t.value, NULL);
+            } else {
+                *(int *)n->value = atoi(t.value);
+            }
 
             return 0;
         case LT_NULL:
