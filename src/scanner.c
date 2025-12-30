@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
@@ -55,8 +56,9 @@ scan_result *build_scan_result(json_file *jf) {
     while(i < jf->length) {
         c = jf->content[i];
         
-        int should_inc = 1;
+        bool should_inc = true; // whether we should go to the next token after scanning a specific token.
         token t;
+
         if (c == '{') {
             t.type = BEGIN_OBJECT;
             strcpy(t.value, "{");
@@ -86,18 +88,21 @@ scan_result *build_scan_result(json_file *jf) {
             
             i++; // to go after the first double quote
 
-            /*
-                concatenate character into token value string until another double quote is reached
-
-                TODO: this would lowk break if I had an escape character with the double quote in there (e.g. \"),
-                I should probably fix this.
-            */
+            // concatenate character into token value string until another double quote is reached
             size_t j = 0;
-            while(i < jf->length && (c = jf->content[i]) != '"') {
+            while((c = jf->content[i]) && c != '"') {
                 t.value[j] = c;
                 j++;
                 i++;
+
+                // skip double-quote escapes
+                if(c == '\\' && jf->content[i] && jf->content[i] == '"') {
+                    t.value[j] = '"';
+                    i++;
+                    j++;
+                }
             }
+
             t.value[j] = '\0';
         } 
         else if(isdigit(c) || c == '-' && i+1 < jf->length && isdigit(jf->content[i+1])) {
@@ -105,7 +110,7 @@ scan_result *build_scan_result(json_file *jf) {
 
             // concatenate number into token value string until we see a non digit character
             size_t j = 0;
-            int seen_decimal = 0;
+            bool seen_decimal = false;
             do {
                 if(jf->content[i] == '.') {
                     if(seen_decimal) {
@@ -115,7 +120,7 @@ scan_result *build_scan_result(json_file *jf) {
                         return NULL;
                     }
 
-                    seen_decimal = 1;
+                    seen_decimal = true;
                 } else if(jf->content[i] == '-' && j != 0) {
                     t.value[j] = '\0';
                     fprintf(stderr, "Invalid Negation Postion: %s. <---\n", t.value);
@@ -129,8 +134,8 @@ scan_result *build_scan_result(json_file *jf) {
             } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.' || jf->content[i] == '-'));
 
             t.value[j] = '\0';
-            should_inc = 0;
-        } 
+            should_inc = false;
+        }
         else if(isalpha(c)) {
             // it can be any of these three literals: false, true, null
             size_t j = 0;
@@ -141,6 +146,7 @@ scan_result *build_scan_result(json_file *jf) {
             } while(i < jf->length && isalpha(jf->content[i]));
             t.value[j] = '\0';
 
+            // match string to literal
             if(strcmp(t.value, "false") == 0) {
                 t.type = LT_FALSE;
                 strcpy(t.value, "0");
@@ -155,8 +161,9 @@ scan_result *build_scan_result(json_file *jf) {
                 return NULL;
             }
 
-            should_inc = 0;
-        } else {
+            should_inc = false;
+        } 
+        else {
             // only characters that should be in random places are whitespaces, newlines and carriage returns
             if(c != ' ' && c != '\n' && c != '\r') {
                 fprintf(stderr, "Invalid character found: %c.\n", c);
@@ -185,6 +192,7 @@ scan_result *build_scan_result(json_file *jf) {
     scan_result *sr = calloc(1, sizeof(scan_result));
     if(!sr) {
         perror("Failed to allocate for scan_result struct object");
+        if(tokens) free(tokens);
         return NULL;
     }
 
