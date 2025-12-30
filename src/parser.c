@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static token *next_token(token *t_stream);
+#include <stdbool.h>
 
 static int parse_value(node *n);
 static int parse_object(node *n);
@@ -11,68 +10,6 @@ static int parse_array(node *n);
 
 static size_t current;
 static token *stream = NULL;
-
-static void traverse_node(node *n, int depth) {
-    if (!n) return;
-
-    // indent
-    for (int i = 0; i < depth; i++) printf("  ");
-
-    collection *coll;
-
-    switch (n->type) {
-        case NODE_STRING:
-            printf("STRING: %s\n", (char *)n->value);
-            break;
-        case NODE_NUMBER_INT:
-            printf("NUMBER (INT): %d\n", *(int *)n->value);
-            break;
-        case NODE_NUMBER_FLOAT:
-            printf("NUMBER (FLOAT): %f\n", *(double *)n->value);
-            break;
-        case NODE_BOOLEAN:
-            printf("BOOLEAN: %s\n", *(int *)n->value ? "true" : "false");
-            break;
-        case NODE_NULL:
-            printf("NULL\n");
-            break;
-        case NODE_OBJECT:
-            coll = (collection *)n->value;
-
-            printf("OBJECT (Length: %ld) {\n", coll->length);
-
-            kv_pair *pairs = (kv_pair *)coll->collection;
-
-            for(size_t i = 0; i < coll->length; i++) {
-                for (int j = 0; j < depth + 1; j++) printf("  ");
-                printf("KEY: %s\n", pairs[i].key);
-
-                traverse_node((node *)pairs[i].value, depth + 2);
-            }
-
-            for (int i = 0; i < depth; i++) printf("  ");
-            printf("}\n");
-            break;
-        case NODE_ARRAY:
-            coll = (collection *)n->value;
-
-            printf("ARRAY (Length: %ld) [\n", coll->length);
-
-            node *arr = (node *)coll->collection;
-
-            for(size_t i = 0; i < coll->length; i++) {
-                traverse_node(&arr[i], depth+2);
-            }
-
-            for (int i = 0; i < depth; i++) printf("  ");
-            printf("]\n");
-
-            break;
-        default:
-            printf("UNKNOWN NODE\n");
-    }
-}
-
 
 node *parse(scan_result *sr) {
     if(!sr || !sr->tokens || sr->token_count == 0) {
@@ -83,14 +20,18 @@ node *parse(scan_result *sr) {
     current = 0;
     stream = sr->tokens;
 
-    node n;
-    if(parse_value(&n) != 0) {
+    node *n = malloc(sizeof(node));
+    if(!n) {
+        perror("Failed to allocate for new node");
         return NULL;
     }
 
-    // traverse everything and print here.
-    traverse_node(&n, 0);
-    return NULL;
+    if(parse_value(n) != 0) {
+        free(n);
+        return NULL;
+    }
+
+    return n;
 }
 
 static int parse_value(node *n) {
@@ -104,7 +45,7 @@ static int parse_value(node *n) {
     switch(t.type) {
         case STRING:
             n->type = NODE_STRING;
-            n->value = malloc(sizeof(t.value));
+            n->value = (char *)malloc(sizeof(t.value));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -113,11 +54,9 @@ static int parse_value(node *n) {
 
             strcpy(n->value, t.value);
             return 0;
-        case NUMBER:
-        case LT_TRUE:
-        case LT_FALSE:
+        case NUMBER: 
             int is_float = strchr(t.value, '.') != NULL;
-            n->type = t.type == NUMBER ? (is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT) : NODE_BOOLEAN;
+            n->type = is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT;
             n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(int));
 
             if(!n->value) {
@@ -130,6 +69,19 @@ static int parse_value(node *n) {
             } else {
                 *(int *)n->value = atoi(t.value);
             }
+            
+            return 0;
+        case LT_TRUE:
+        case LT_FALSE:
+            n->type = NODE_BOOLEAN;
+            n->value = malloc(sizeof(bool));
+
+            if(!n->value) {
+                perror("Failed to allocate memory for node value");
+                return -1;
+            }
+
+            *(bool *)n->value = strcmp(t.value, "true") == 0 ? true : false;
 
             return 0;
         case LT_NULL:

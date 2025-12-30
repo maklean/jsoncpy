@@ -88,25 +88,38 @@ scan_result *build_scan_result(json_file *jf) {
             
             i++; // to go after the first double quote
 
-            // concatenate character into token value string until another double quote is reached
             size_t j = 0;
-            while((c = jf->content[i]) && c != '"') {
-                t.value[j] = c;
+            while ((c = jf->content[i]) && c != '"') {
+                // handle escape characters
+                if (c == '\\' && jf->content[i+1]) {
+                    i++; // move past escape
+
+                    switch (jf->content[i]) {
+                        case 't':  t.value[j] = '\t'; break;
+                        case 'n':  t.value[j] = '\n'; break;
+                        case 'r':  t.value[j] = '\r'; break;
+                        case 'b':  t.value[j] = '\b'; break;
+                        case 'f':  t.value[j] = '\f'; break;
+                        case '\\': t.value[j] = '\\'; break;
+                        case '"':  t.value[j] = '"'; break;
+                        case '/':  t.value[j] = '/'; break;
+                        default: t.value[j] = jf->content[i]; break; // invalid, but keep it ig
+                    }
+                } else {
+                    // normal character
+                    t.value[j] = c;
+                }
+                
                 j++;
                 i++;
-
-                // skip double-quote escapes
-                if(c == '\\' && jf->content[i] && jf->content[i] == '"') {
-                    t.value[j] = '"';
-                    i++;
-                    j++;
-                }
             }
 
             t.value[j] = '\0';
         } 
         else if(isdigit(c) || c == '-' && i+1 < jf->length && isdigit(jf->content[i+1])) {
             t.type = NUMBER;
+
+            // TODO: scan exp. notation, e.g. 3.5e-4
 
             // concatenate number into token value string until we see a non digit character
             size_t j = 0;
@@ -149,10 +162,10 @@ scan_result *build_scan_result(json_file *jf) {
             // match string to literal
             if(strcmp(t.value, "false") == 0) {
                 t.type = LT_FALSE;
-                strcpy(t.value, "0");
+                strcpy(t.value, "true");
             } else if(strcmp(t.value, "true") == 0) {
                 t.type = LT_TRUE;
-                strcpy(t.value, "1");
+                strcpy(t.value, "false");
             } else if(strcmp(t.value, "null") == 0) {
                 t.type = LT_NULL;
             } else {
@@ -176,7 +189,7 @@ scan_result *build_scan_result(json_file *jf) {
         }
 
         // resize array to accommodate new token
-        tmp_tokens = realloc(tokens, sizeof(token) * (++token_count));
+        tmp_tokens = realloc(tokens, sizeof(token) * (token_count + 1));
         if(!tmp_tokens) {
             perror("Failed to reallocate memory for tokens array");
             free(tokens);
@@ -184,7 +197,7 @@ scan_result *build_scan_result(json_file *jf) {
         }
 
         tokens = tmp_tokens;
-        tokens[token_count-1] = t;
+        tokens[token_count++] = t;
 
         if(should_inc) i++;
     }

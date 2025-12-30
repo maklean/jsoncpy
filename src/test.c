@@ -16,7 +16,13 @@ int main() {
 
     debug_scan_result(sr);
 
-    parse(sr);
+    node *n = parse(sr);
+    if(!n) {
+        fprintf(stderr, "Failed to parse.\n");
+        return 0;
+    }
+
+    debug_node_tree(n, 0);
 
     free_scan_result(sr);
 
