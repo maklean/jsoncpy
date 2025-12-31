@@ -136,7 +136,7 @@ static int parse_object(node *n) {
             current++;
 
             pair.value = malloc(sizeof(node));
-            if(parse_value((node *)pair.value) != 0) {
+            if(parse_value(pair.value) != 0) {
                 if(pairs) free(pairs);
                 return -1;
             }
