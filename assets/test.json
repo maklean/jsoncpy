@@ -1,0 +1,51 @@
+{
+  "user": {
+    "id": 101,
+    "name": "John Doe",
+    "email": "johndoe@example.com",
+    "isAdmin": false,
+    "roles": ["user", "editor", null],
+    "profile": {
+      "age": 29,
+      "gender": "male",
+      "location": "New York",
+      "preferences": {
+        "theme": "dark",
+        "notifications": true,
+        "language": "en"
+      }
+    }
+  },
+  "posts": [
+    {
+      "id": 1,
+      "title": "Introduction to C",
+      "content": "This post is about learning C programming.",
+      "tags": ["C", "programming", "tutorial"],
+      "published": true,
+      "date": "2025-12-15T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Exploring JSON",
+      "content": "This post delves into JSON data format.",
+      "tags": ["JSON", "data", "format"],
+      "published": true,
+      "date": "2025-12-20T08:30:00Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1001,
+      "userId": 102,
+      "text": "Great post! Looking forward to more tutorials.",
+      "date": "2025-12-15T14:00:00Z"
+    },
+    {
+      "id": 1002,
+      "userId": 103,
+      "text": "JSON is amazing, thanks for explaining it so clearly.",
+      "date": "2025-12-21T10:00:00Z"
+    }
+  ]
+}

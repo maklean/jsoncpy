@@ -52,7 +52,7 @@ typedef struct node_s {
 
 typedef struct kv_pair_s {
     char key[513];
-    void *value;
+    node *value;
 } kv_pair;
 
 typedef struct collection_s {

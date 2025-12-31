@@ -25,6 +25,38 @@ void free_json_file(json_file *jf) {
     free(jf);
 }
 
+void free_node_ast(node *n) {
+    if (!n) {
+        fprintf(stderr, "Invalid node pointer given.\n");
+        return;
+    }
+
+    if(n->type == NODE_OBJECT) {
+        collection *coll = (collection *)n->value;
+
+        // free the value pointer from every pair
+        kv_pair *pairs = (kv_pair *)coll->collection;
+        for(size_t i = 0; i < coll->length; i++) {
+            free_node_ast(pairs[i].value);
+        }
+
+        free(pairs);
+    } else if(n->type == NODE_ARRAY) {
+        collection *coll = (collection *)n->value;
+
+        // free the value pointer from every array element.
+        node *arr_elements = (node *)coll->collection;
+        for(size_t i = 0; i < coll->length; i++) {
+            if(arr_elements[i].value) free(arr_elements[i].value);
+        }
+        
+        free(arr_elements);
+    }
+
+    if(n->value) free(n->value);
+    free(n);
+}
+
 const char *token_type_to_str(token_type t) {
     switch(t) {
         case BEGIN_ARRAY:
