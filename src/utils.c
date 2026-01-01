@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void free_object_collection(collection *coll);
+static void free_array_collection(collection *coll);
+
 void free_scan_result(scan_result *sr) {
     if(!sr) {
         fprintf(stderr, "Invalid scan_result struct object given.\n");
@@ -25,6 +28,34 @@ void free_json_file(json_file *jf) {
     free(jf);
 }
 
+static void free_object_collection(collection *coll) {
+    // free the value pointer from every pair
+    kv_pair *pairs = (kv_pair *)coll->collection;
+
+    for(size_t i = 0; i < coll->length; i++) {
+        free_node_ast(pairs[i].value);
+    }
+
+    free(pairs);
+}
+
+static void free_array_collection(collection *coll) {
+    // free the value pointer from every array element.
+    node *arr_elements = (node *)coll->collection;
+
+    for(size_t i = 0; i < coll->length; i++) {
+        if(arr_elements[i].type == NODE_OBJECT) {
+            free_object_collection(arr_elements[i].value);
+        } else if(arr_elements[i].type == NODE_ARRAY) {
+            free_array_collection(arr_elements[i].value);
+        } 
+
+        if(arr_elements[i].value) free(arr_elements[i].value);
+    }
+    
+    free(arr_elements);
+}
+
 void free_node_ast(node *n) {
     if (!n) {
         fprintf(stderr, "Invalid node pointer given.\n");
@@ -33,27 +64,15 @@ void free_node_ast(node *n) {
 
     if(n->type == NODE_OBJECT) {
         collection *coll = (collection *)n->value;
-
-        // free the value pointer from every pair
-        kv_pair *pairs = (kv_pair *)coll->collection;
-        for(size_t i = 0; i < coll->length; i++) {
-            free_node_ast(pairs[i].value);
-        }
-
-        free(pairs);
+        free_object_collection(coll);
     } else if(n->type == NODE_ARRAY) {
         collection *coll = (collection *)n->value;
-
-        // free the value pointer from every array element.
-        node *arr_elements = (node *)coll->collection;
-        for(size_t i = 0; i < coll->length; i++) {
-            if(arr_elements[i].value) free(arr_elements[i].value);
-        }
-        
-        free(arr_elements);
+        free_array_collection(coll);
     }
 
-    if(n->value) free(n->value);
+    if(n->value) {
+        free(n->value);
+    }
     free(n);
 }
 

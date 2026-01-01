@@ -4,7 +4,10 @@
     "name": "John Doe",
     "email": "johndoe@example.com",
     "isAdmin": false,
-    "roles": ["user", "editor", null],
+    "roles": ["user", "editor", {
+        "roleName": "administrator",
+        "rolePermissions": ["*", null, 100]
+    }],
     "profile": {
       "age": 29,
       "gender": "male",
