@@ -129,5 +129,5 @@ OBJECT (Length: 3) {
 ```
 
 ## TODO
-- [ ] Support scanning exponential numbers (e.g., 2.9e-4)
+- [X] Support scanning exponential numbers (e.g., 2.9e-4)
 - [ ] Add a query language to traverse the AST.
