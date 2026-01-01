@@ -60,7 +60,7 @@ static int parse_value(node *n) {
             strcpy(n->value, t.value);
             return 0;
         case NUMBER: 
-            int is_float = strchr(t.value, '.') != NULL;
+            int is_float = strchr(t.value, '.') != NULL || strchr(t.value, 'e') != NULL || strchr(t.value, 'E') != NULL; // need to use strtod() to parse E-notation
             n->type = is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT;
             n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(int));
 

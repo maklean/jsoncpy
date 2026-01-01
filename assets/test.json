@@ -6,7 +6,8 @@
     "isAdmin": false,
     "roles": ["user", "editor", {
         "roleName": "administrator",
-        "rolePermissions": ["*", null, 100]
+        "rolePermissions": ["*", null, 100],
+        "coolNumbers": [10e2, 1e+3, 5.2e-3, 6E3, 9e-3]
     }],
     "profile": {
       "age": 29,

@@ -119,24 +119,38 @@ scan_result *build_scan_result(json_file *jf) {
         else if(isdigit(c) || c == '-' && i+1 < jf->length && isdigit(jf->content[i+1])) {
             t.type = NUMBER;
 
-            // TODO: scan exp. notation, e.g. 3.5e-4
-
             // concatenate number into token value string until we see a non digit character
             size_t j = 0;
             bool seen_decimal = false;
+            bool seen_exp = false;
             do {
                 if(jf->content[i] == '.') {
-                    if(seen_decimal) {
+                    // can't have e before the decimal
+                    if(seen_decimal || seen_exp) {
                         t.value[j] = '\0';
-                        fprintf(stderr, "Invalid Number: %s. <---\n", t.value);
+                        fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
                         if(tokens) free(tokens);
                         return NULL;
                     }
 
                     seen_decimal = true;
-                } else if(jf->content[i] == '-' && j != 0) {
+                } else if(jf->content[i] == '-' && j != 0 && tolower(jf->content[i-1]) != 'e') { // negative should only be at the start of the number or next to an e
                     t.value[j] = '\0';
-                    fprintf(stderr, "Invalid Negation Postion: %s. <---\n", t.value);
+                    fprintf(stderr, "Invalid Negation Postion: %s%c <---\n", t.value, jf->content[i]);
+                    if(tokens) free(tokens);
+                    return NULL;
+                } else if(tolower(jf->content[i]) == 'e') {
+                    if(seen_exp) {
+                        t.value[j] = '\0';
+                        fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
+                        if(tokens) free(tokens);
+                        return NULL;
+                    }
+
+                    seen_exp = true;
+                } else if(jf->content[i] == '+' && (!(jf->content[i-1]) || tolower(jf->content[i-1]) != 'e')) { // plus can only be next to an e
+                    t.value[j] = '\0';
+                    fprintf(stderr, "Invalid Number (invalid plus position): %s%c <---\n", t.value, jf->content[i]);
                     if(tokens) free(tokens);
                     return NULL;
                 }
@@ -144,9 +158,17 @@ scan_result *build_scan_result(json_file *jf) {
                 t.value[j] = jf->content[i];
                 j++;
                 i++;
-            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.' || jf->content[i] == '-'));
+            } while(i < jf->length && (isdigit(jf->content[i]) || jf->content[i] == '.' || jf->content[i] == '-' || tolower(jf->content[i]) == 'e' || jf->content[i] == '+'));
 
             t.value[j] = '\0';
+
+            // stop invalid last decimal or e position, and leading zeros
+            if(t.value[j-1] == '.' || tolower(t.value[j-1]) == 'e' || (t.value[0] == '0' && j > 2 && t.value[1] != '.')) {
+                fprintf(stderr, "Invalid Number: %s <---\n", t.value);
+                if(tokens) free(tokens);
+                return NULL;
+            }
+
             should_inc = false;
         }
         else if(isalpha(c)) {

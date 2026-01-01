@@ -25,7 +25,7 @@ OBJECT (Length: 3) {
         ARRAY (Length: 3) [
             STRING: "user"
             STRING: "editor"
-            OBJECT (Length: 2) {
+            OBJECT (Length: 3) {
               KEY: roleName
                 STRING: "administrator"
               KEY: rolePermissions
@@ -33,6 +33,14 @@ OBJECT (Length: 3) {
                     STRING: "*"
                     NULL
                     NUMBER (INT): 100
+                ]
+              KEY: coolNumbers
+                ARRAY (Length: 5) [
+                    NUMBER (FLOAT): 1000
+                    NUMBER (FLOAT): 1000
+                    NUMBER (FLOAT): 0.0051999999999999998
+                    NUMBER (FLOAT): 6000
+                    NUMBER (FLOAT): 0.0089999999999999993
                 ]
             }
         ]
