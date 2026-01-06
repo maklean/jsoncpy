@@ -128,7 +128,26 @@ OBJECT (Length: 3) {
 }
 ```
 
+## How To Run
+
+1. Clone the repository from GitHub and navigate to the project:
+```bash
+git clone https://github.com/maklean/jsoncpy.git
+cd jsoncpy
+```
+
+2. Build the project with the `make` utility:
+```bash
+make
+```
+
+3. Run the project:
+```bash
+./jsoncpy <path-to-json>
+```
+
 ## TODO
 - [X] Support scanning exponential numbers (e.g., 2.9e-4)
+- [X] Make a Makefile
 - [ ] Check for duplicate object keys
 - [ ] Add a query language to traverse the AST.

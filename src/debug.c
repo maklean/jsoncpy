@@ -11,7 +11,7 @@ void debug_json_file(json_file *jf) {
         return;
     }
 
-    printf("=== json_file ===:\nName: %s\nLength: %ld\nContent: %s\n", jf, jf->file_name, jf->length, jf->content);
+    printf("=== json_file ===:\nName: %s\nLength: %ld\nContent: %s\n", jf->file_name, jf->length, jf->content);
 }
 
 void debug_scan_result(scan_result *sr) {

@@ -116,7 +116,7 @@ scan_result *build_scan_result(json_file *jf) {
 
             t.value[j] = '\0';
         } 
-        else if(isdigit(c) || c == '-' && i+1 < jf->length && isdigit(jf->content[i+1])) {
+        else if(isdigit(c) || (c == '-' && i+1 < jf->length && isdigit(jf->content[i+1]))) {
             t.type = NUMBER;
 
             // concatenate number into token value string until we see a non digit character

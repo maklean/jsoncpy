@@ -100,5 +100,7 @@ const char *token_type_to_str(token_type t) {
             return "STRING";
         case NUMBER:
             return "NUMBER";
+        default:
+            return "UNKNOWN";
     }
 }

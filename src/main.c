@@ -9,7 +9,7 @@
 int main(int argc, char *argv[]) {
     if(argc < 2) {
         fprintf(stderr, "Insufficent Arguments.\n");
-        printf("Usage: ./executable_name <path-to-json>");
+        printf("Usage: ./jsoncpy <path-to-json>\n");
 
         exit(EXIT_FAILURE);
     }

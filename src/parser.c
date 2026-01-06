@@ -1,4 +1,5 @@
 #include "include/parser.h"
+#include "include/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +33,7 @@ node *parse(scan_result *sr) {
     }
 
     if(parse_value(n) != 0) {
-        free(n);
+        free_node_ast(n);
         return NULL;
     }
 
@@ -97,6 +98,9 @@ static int parse_value(node *n) {
             return parse_object(n);
         case BEGIN_ARRAY:
             return parse_array(n);
+        default:
+            fprintf(stderr, "Invalid token type found.\n");
+            return -1;
     }
 
     fprintf(stderr, "Unable to parse value.\n");
