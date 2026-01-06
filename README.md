@@ -130,4 +130,5 @@ OBJECT (Length: 3) {
 
 ## TODO
 - [X] Support scanning exponential numbers (e.g., 2.9e-4)
+- [ ] Check for duplicate object keys
 - [ ] Add a query language to traverse the AST.
