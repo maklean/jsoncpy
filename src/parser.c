@@ -14,6 +14,9 @@ static int parse_object(node *n);
 // Parses the next token (i.e., BEGIN_ARRAY) into node 'n', returns 0 if successful, otherwise -1.
 static int parse_array(node *n);
 
+// Checks whether 'string' exists in the string array 'arr'.
+static bool exists_in_arr(char *string, char **arr, size_t length);
+
 static token *stream = NULL; // array of tokens
 static size_t current; // current token index in 'stream'
 
@@ -33,7 +36,7 @@ node *parse(scan_result *sr) {
     }
 
     if(parse_value(n) != 0) {
-        free_node_ast(n);
+        free(n);
         return NULL;
     }
 
@@ -113,6 +116,12 @@ static int parse_object(node *n) {
         return -1;
     }
 
+    // array of object keys (to keep track of dupes)
+    char **key_arr = NULL;
+    char **tmp_key_arr; // for realloc
+
+    size_t key_arr_next_i = 0;
+
     n->type = NODE_OBJECT;
 
     // array of kv_pairs
@@ -125,14 +134,45 @@ static int parse_object(node *n) {
 
     while(t.type != END_OBJECT) {
         if(t.type == STRING) {
+            if(key_arr != NULL && key_arr_next_i > 0 && exists_in_arr(t.value, key_arr, key_arr_next_i)) {
+                fprintf(stderr, "Duplicate key found: %s\n", t.value);
+                if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
+
+                return -1;
+            }
+
             kv_pair pair;
 
             strcpy(pair.key, t.value);
+
+            tmp_key_arr = realloc(key_arr, sizeof(char*) * (key_arr_next_i + 1));
+            if(!tmp_key_arr) {
+                perror("Failed to reallocate memory for key array");
+                if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
+                return -1;
+            }
+
+            key_arr = tmp_key_arr;
+            key_arr[key_arr_next_i] = malloc(513);
+
+            if(!key_arr[key_arr_next_i]) {
+                perror("Failed to allocate memory for key_arr string");
+                if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
+                return -1;
+            }
+
+            strcpy(key_arr[key_arr_next_i], t.value);
+            key_arr_next_i++;
 
             // name seperator should be the next token
             t = stream[++current];
             if(t.type != NAME_SEPARATOR) {
                 fprintf(stderr, "Expected ':' at position %ld, but didn't find it.\n", current-1);
+                if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -142,6 +182,7 @@ static int parse_object(node *n) {
             pair.value = malloc(sizeof(node));
             if(parse_value(pair.value) != 0) {
                 if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -149,6 +190,8 @@ static int parse_object(node *n) {
             tmp_pairs = realloc(pairs, sizeof(kv_pair)*(next_index+1));
             if(!tmp_pairs) {
                 perror("Failed to reallocate kv_pair array");
+                if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
                 return -1;
             }
             pairs = tmp_pairs;
@@ -157,6 +200,7 @@ static int parse_object(node *n) {
         } else {
             fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
             if(pairs) free(pairs);
+            if(key_arr) free(key_arr);
             return -1;
         }
 
@@ -169,6 +213,7 @@ static int parse_object(node *n) {
             if(t.type == END_OBJECT) {
                 fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
                 if(pairs) free(pairs);
+                if(key_arr) free(key_arr);
                 return -1;
             }
         }
@@ -178,11 +223,14 @@ static int parse_object(node *n) {
     if(!n->value) {
         perror("Failed to allocate collection for object node value");
         if(pairs) free(pairs);
+        if(key_arr) free(key_arr);
         return -1;
     }
 
     ((collection *)n->value)->collection = (void *)pairs;
     ((collection *)n->value)->length = next_index;
+
+    if(key_arr) free(key_arr);
 
     return 0;
 }
@@ -259,4 +307,24 @@ static int parse_array(node *n) {
     ((collection *)n->value)->length = next_index;
 
     return 0;
+}
+
+bool exists_in_arr(char *string, char **arr, size_t length) {
+    if(!string) {
+        fprintf(stderr, "Invalid string given.\n");
+        return false;
+    }
+
+    if(!arr) {
+        fprintf(stderr, "Invalid string array given.\n");
+        return false;
+    }
+
+    for(size_t i = 0; i < length; i++) {
+        if(strcmp(string, arr[i]) == 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
