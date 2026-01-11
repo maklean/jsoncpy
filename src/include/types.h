@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define VALUE_STR_BUFFER 513 // 512 characters + 1 for null-terminator
+
 #include <stddef.h>
 
 // Follows the JSON Grammar defined in RFC8259 (Source: https://datatracker.ietf.org/doc/html/rfc8259#section-2)
@@ -30,7 +32,7 @@ typedef enum node_type_e {
 
 typedef struct token_s {
     token_type type;
-    char value[513]; // 512 bytes for each token value for now...
+    char value[VALUE_STR_BUFFER];
 } token;
 
 typedef struct json_file_s {
@@ -51,7 +53,7 @@ typedef struct node_s {
 } node;
 
 typedef struct kv_pair_s {
-    char key[513];
+    char key[VALUE_STR_BUFFER];
     node *value;
 } kv_pair;
 
