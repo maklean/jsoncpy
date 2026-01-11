@@ -14,8 +14,11 @@ static int parse_object(node *n);
 // Parses the next token (i.e., BEGIN_ARRAY) into node 'n', returns 0 if successful, otherwise -1.
 static int parse_array(node *n);
 
-// Checks whether 'string' exists in the string array 'arr'.
-static bool exists_in_arr(char *string, char **arr, size_t length);
+// Checks whether 'str' exists in the string array 'key_arr'.
+static bool exists_in_arr(char *key_arr, size_t length, const char *str);
+
+// Frees the key-value pair array early
+static void free_pair_arr(kv_pair *pairs, size_t length);
 
 static token *stream = NULL; // array of tokens
 static size_t current; // current token index in 'stream'
@@ -115,10 +118,9 @@ static int parse_object(node *n) {
         fprintf(stderr, "Invalid pointer to node struct given.\n");
         return -1;
     }
-
-    // array of object keys (to keep track of dupes)
-    char **key_arr = NULL;
-    char **tmp_key_arr; // for realloc
+    
+    char *key_arr = NULL; // basically a string array, but all stored in one contiguous block of memory instead of storing pointers
+    char *tmp_key_arr; // for realloc
 
     size_t key_arr_next_i = 0;
 
@@ -134,9 +136,9 @@ static int parse_object(node *n) {
 
     while(t.type != END_OBJECT) {
         if(t.type == STRING) {
-            if(key_arr != NULL && key_arr_next_i > 0 && exists_in_arr(t.value, key_arr, key_arr_next_i)) {
-                fprintf(stderr, "Duplicate key found: %s\n", t.value);
-                if(pairs) free(pairs);
+            if(key_arr != NULL && key_arr_next_i > 0 && exists_in_arr(key_arr, key_arr_next_i, t.value)) {
+                fprintf(stderr, "Duplicate key '%s' found at character position: %ld\n", t.value, current-1);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
 
                 return -1;
@@ -146,32 +148,25 @@ static int parse_object(node *n) {
 
             strcpy(pair.key, t.value);
 
-            tmp_key_arr = realloc(key_arr, sizeof(char*) * (key_arr_next_i + 1));
+            // add key to key array
+            tmp_key_arr = realloc(key_arr, VALUE_STR_BUFFER*(key_arr_next_i+1));
             if(!tmp_key_arr) {
                 perror("Failed to reallocate memory for key array");
-                if(pairs) free(pairs);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
 
             key_arr = tmp_key_arr;
-            key_arr[key_arr_next_i] = malloc(513);
-
-            if(!key_arr[key_arr_next_i]) {
-                perror("Failed to allocate memory for key_arr string");
-                if(pairs) free(pairs);
-                if(key_arr) free(key_arr);
-                return -1;
-            }
-
-            strcpy(key_arr[key_arr_next_i], t.value);
+            
+            snprintf(key_arr + (VALUE_STR_BUFFER*key_arr_next_i), VALUE_STR_BUFFER, "%s", t.value);
             key_arr_next_i++;
 
             // name seperator should be the next token
             t = stream[++current];
             if(t.type != NAME_SEPARATOR) {
                 fprintf(stderr, "Expected ':' at position %ld, but didn't find it.\n", current-1);
-                if(pairs) free(pairs);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -181,7 +176,8 @@ static int parse_object(node *n) {
 
             pair.value = malloc(sizeof(node));
             if(parse_value(pair.value) != 0) {
-                if(pairs) free(pairs);
+                if(pair.value) free_node_ast(pair.value);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -190,7 +186,7 @@ static int parse_object(node *n) {
             tmp_pairs = realloc(pairs, sizeof(kv_pair)*(next_index+1));
             if(!tmp_pairs) {
                 perror("Failed to reallocate kv_pair array");
-                if(pairs) free(pairs);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -199,7 +195,7 @@ static int parse_object(node *n) {
             pairs[next_index++] = pair;
         } else {
             fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
-            if(pairs) free(pairs);
+            if(pairs) free_pair_arr(pairs, next_index);
             if(key_arr) free(key_arr);
             return -1;
         }
@@ -212,7 +208,7 @@ static int parse_object(node *n) {
             // this is more of a grammar check, this could be omitted and it would still get the complete AST.
             if(t.type == END_OBJECT) {
                 fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
-                if(pairs) free(pairs);
+                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -222,7 +218,8 @@ static int parse_object(node *n) {
     n->value = malloc(sizeof(collection));
     if(!n->value) {
         perror("Failed to allocate collection for object node value");
-        if(pairs) free(pairs);
+
+        if(pairs) free_pair_arr(pairs, next_index);
         if(key_arr) free(key_arr);
         return -1;
     }
@@ -309,22 +306,35 @@ static int parse_array(node *n) {
     return 0;
 }
 
-bool exists_in_arr(char *string, char **arr, size_t length) {
-    if(!string) {
+bool exists_in_arr(char *key_arr, size_t length, const char *str) {
+    if(!key_arr) {
+        fprintf(stderr, "Invalid key array given.\n");
+        return false;
+    }
+
+    if(!str) {
         fprintf(stderr, "Invalid string given.\n");
         return false;
     }
 
-    if(!arr) {
-        fprintf(stderr, "Invalid string array given.\n");
-        return false;
-    }
-
     for(size_t i = 0; i < length; i++) {
-        if(strcmp(string, arr[i]) == 0) {
+        if(strcmp(key_arr+(VALUE_STR_BUFFER*i), str) == 0) {
             return true;
         }
     }
 
     return false;
+}
+
+void free_pair_arr(kv_pair *pairs, size_t length) {
+    if(!pairs) {
+        fprintf(stderr, "Invalid key value pair array given.\n");
+        return;
+    }
+
+    for(size_t i = 0; i < length; i++) {
+        free_node_ast(pairs[i].value);
+    }
+
+    free(pairs);
 }
