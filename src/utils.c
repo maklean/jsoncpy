@@ -11,7 +11,7 @@ void free_scan_result(scan_result *sr) {
         return;
     }
 
-    if(sr->json_file) free_json_file(sr->json_file);
+    //if(sr->json_file) free_json_file(sr->json_file);
     if(sr->tokens) free(sr->tokens);
 
     free(sr);

@@ -1,11 +1,14 @@
 #include "include/scanner.h"
 #include "include/debug.h"
 #include "include/utils.h"
+#include "include/arena.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdbool.h>
+
+extern Arena *a;
 
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
@@ -34,7 +37,6 @@ scan_result *scan(const char *json_file_dir) {
 
     scan_result *sr = build_scan_result(jf);
     if(!sr) {
-        free_json_file(jf);
         return NULL;
     }
 
@@ -211,10 +213,9 @@ scan_result *build_scan_result(json_file *jf) {
         }
 
         // resize array to accommodate new token
-        tmp_tokens = realloc(tokens, sizeof(token) * (token_count + 1));
+        tmp_tokens = arena_resize(a, tokens, sizeof(token)*token_count, sizeof(token)*(token_count + 1));
         if(!tmp_tokens) {
             perror("Failed to reallocate memory for tokens array");
-            free(tokens);
             return NULL;
         }
 
@@ -224,10 +225,9 @@ scan_result *build_scan_result(json_file *jf) {
         if(should_inc) i++;
     }
 
-    scan_result *sr = calloc(1, sizeof(scan_result));
+    scan_result *sr = arena_alloc(a, sizeof(scan_result));
     if(!sr) {
         perror("Failed to allocate for scan_result struct object");
-        if(tokens) free(tokens);
         return NULL;
     }
 
@@ -250,7 +250,7 @@ json_file *get_json_file(const char *dir) {
     size_t file_length = ftell(fptr);
     rewind(fptr);
 
-    char *content = malloc(file_length+1);
+    char *content = arena_alloc(a, file_length+1);
     if(!content) {
         perror("Failed to allocate for JSON file content");
         fclose(fptr);
@@ -264,10 +264,9 @@ json_file *get_json_file(const char *dir) {
     fclose(fptr);
 
     // create json_file struct object
-    json_file *jf = malloc(sizeof(json_file));
+    json_file *jf = arena_alloc(a, sizeof(json_file));
     if(!jf) {
         perror("Failed to allocate for json_file struct object");
-        free(content);
         return NULL;
     }
 
