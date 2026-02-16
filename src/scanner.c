@@ -131,7 +131,6 @@ scan_result *build_scan_result(json_file *jf) {
                     if(seen_decimal || seen_exp) {
                         t.value[j] = '\0';
                         fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
-                        if(tokens) free(tokens);
                         return NULL;
                     }
 
@@ -139,13 +138,11 @@ scan_result *build_scan_result(json_file *jf) {
                 } else if(jf->content[i] == '-' && j != 0 && tolower(jf->content[i-1]) != 'e') { // negative should only be at the start of the number or next to an e
                     t.value[j] = '\0';
                     fprintf(stderr, "Invalid Negation Postion: %s%c <---\n", t.value, jf->content[i]);
-                    if(tokens) free(tokens);
                     return NULL;
                 } else if(tolower(jf->content[i]) == 'e') {
                     if(seen_exp) {
                         t.value[j] = '\0';
                         fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
-                        if(tokens) free(tokens);
                         return NULL;
                     }
 
@@ -153,7 +150,6 @@ scan_result *build_scan_result(json_file *jf) {
                 } else if(jf->content[i] == '+' && (!(jf->content[i-1]) || tolower(jf->content[i-1]) != 'e')) { // plus can only be next to an e
                     t.value[j] = '\0';
                     fprintf(stderr, "Invalid Number (invalid plus position): %s%c <---\n", t.value, jf->content[i]);
-                    if(tokens) free(tokens);
                     return NULL;
                 }
 
@@ -167,7 +163,6 @@ scan_result *build_scan_result(json_file *jf) {
             // stop invalid last decimal or e position, and leading zeros
             if(t.value[j-1] == '.' || tolower(t.value[j-1]) == 'e' || (t.value[0] == '0' && j > 2 && t.value[1] != '.')) {
                 fprintf(stderr, "Invalid Number: %s <---\n", t.value);
-                if(tokens) free(tokens);
                 return NULL;
             }
 
@@ -194,7 +189,6 @@ scan_result *build_scan_result(json_file *jf) {
                 t.type = LT_NULL;
             } else {
                 fprintf(stderr, "Invalid identifier: '%s'.\n", t.value);
-                if(tokens) free(tokens);
                 return NULL;
             }
 
@@ -204,7 +198,6 @@ scan_result *build_scan_result(json_file *jf) {
             // only characters that should be in random places are whitespaces, newlines and carriage returns
             if(c != ' ' && c != '\n' && c != '\r') {
                 fprintf(stderr, "Invalid character found: %c.\n", c);
-                if(tokens) free(tokens);
                 return NULL;
             }
 

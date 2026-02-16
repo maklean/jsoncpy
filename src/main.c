@@ -25,11 +25,13 @@ int main(int argc, char *argv[]) {
 
     scan_result *sr = scan(argv[1]);
     if(!sr) {
+        arena_free(a);
         exit(EXIT_FAILURE);
     }
 
     node *root = parse(sr);
     if(!root) {
+        arena_free(a);
         exit(EXIT_FAILURE);
     }
 
