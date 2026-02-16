@@ -18,7 +18,7 @@ static int parse_object(node *n);
 static int parse_array(node *n);
 
 // Checks whether 'str' exists in the string array 'key_arr'.
-static bool exists_in_arr(char *key_arr, size_t length, const char *str);
+static bool exists_in_arr(const char *key_arr, size_t length, const char *str);
 
 static token *stream = NULL; // array of tokens
 static size_t current; // current token index in 'stream'
@@ -295,7 +295,7 @@ static int parse_array(node *n) {
     return 0;
 }
 
-bool exists_in_arr(char *key_arr, size_t length, const char *str) {
+bool exists_in_arr(const char *key_arr, size_t length, const char *str) {
     if(!key_arr) {
         fprintf(stderr, "Invalid key array given.\n");
         return false;
