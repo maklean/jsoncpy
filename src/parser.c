@@ -118,7 +118,14 @@ static int parse_object(node *n) {
         return -1;
     }
     
-    char *key_arr = NULL; // basically a string array, but all stored in one contiguous block of memory instead of storing pointers
+    /*
+        basically a string array, but all stored in one contiguous block 
+        of memory instead of storing pointers.
+
+        it dies at the end of the function so no point allocating it in
+        the arena.
+    */
+    char *key_arr = NULL; 
     char *tmp_key_arr; // for realloc
 
     size_t key_arr_next_i = 0;
@@ -137,6 +144,7 @@ static int parse_object(node *n) {
         if(t.type == STRING) {
             if(key_arr != NULL && key_arr_next_i > 0 && exists_in_arr(key_arr, key_arr_next_i, t.value)) {
                 fprintf(stderr, "Duplicate key '%s' found at character position: %ld\n", t.value, current-1);
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -145,9 +153,10 @@ static int parse_object(node *n) {
             strcpy(pair.key, t.value);
 
             // add key to key array
-            tmp_key_arr = arena_resize(a, key_arr, VALUE_STR_BUFFER*key_arr_next_i, VALUE_STR_BUFFER*(key_arr_next_i+1));
+            tmp_key_arr = realloc(key_arr, VALUE_STR_BUFFER*(key_arr_next_i+1));
             if(!tmp_key_arr) {
                 perror("Failed to reallocate memory for key array");
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -160,6 +169,7 @@ static int parse_object(node *n) {
             t = stream[++current];
             if(t.type != NAME_SEPARATOR) {
                 fprintf(stderr, "Expected ':' at position %ld, but didn't find it.\n", current-1);
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -168,6 +178,7 @@ static int parse_object(node *n) {
 
             pair.value = arena_alloc(a, sizeof(node));
             if(parse_value(pair.value) != 0) {
+                if(key_arr) free(key_arr);
                 return -1;
             }
 
@@ -175,6 +186,7 @@ static int parse_object(node *n) {
             tmp_pairs = arena_resize(a, pairs, sizeof(kv_pair)*next_index, sizeof(kv_pair)*(next_index+1));
             if(!tmp_pairs) {
                 perror("Failed to reallocate kv_pair array");
+                if(key_arr) free(key_arr);
                 return -1;
             }
             pairs = tmp_pairs;
@@ -182,6 +194,7 @@ static int parse_object(node *n) {
             pairs[next_index++] = pair;
         } else {
             fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
+            if(key_arr) free(key_arr);
             return -1;
         }
 
@@ -193,6 +206,7 @@ static int parse_object(node *n) {
             // this is more of a grammar check, this could be omitted and it would still get the complete AST.
             if(t.type == END_OBJECT) {
                 fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
+                if(key_arr) free(key_arr);
                 return -1;
             }
         }
@@ -206,6 +220,8 @@ static int parse_object(node *n) {
 
     ((collection *)n->value)->collection = (void *)pairs;
     ((collection *)n->value)->length = next_index;
+
+    if(key_arr) free(key_arr);
 
     return 0;
 }
