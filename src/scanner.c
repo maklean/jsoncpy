@@ -251,7 +251,14 @@ json_file *get_json_file(const char *dir) {
     }
 
     // copy content onto content string
-    fread(content, sizeof(char), file_length, fptr);
+    size_t read = fread(content, sizeof(char), file_length, fptr);
+
+    if(read < file_length) {
+        perror("Failed to read complete JSON file content");
+        fclose(fptr);
+        return NULL;
+    }
+    
     content[file_length] = '\0';
 
     fclose(fptr);
