@@ -1,5 +1,5 @@
 # jsoncpy
-``jsoncpy`` is a JSON compiler frontend built entirely in C. It parses a JSON file and prints its Abstract Syntax Tree (AST). The program takes a single command-line argument: the path to the JSON file. This compiler frontend follows the JSON Grammar defined in [RFC8259](https://datatracker.ietf.org/doc/html/rfc8259).
+``jsoncpy`` is a JSON compiler frontend built entirely in C. It parses a JSON file and prints its Abstract Syntax Tree (AST). The program takes a single command-line argument: the path to the JSON file. This compiler frontend follows the JSON Grammar defined in [RFC 8259 (Internet Standard)](https://datatracker.ietf.org/doc/html/rfc8259).
 
 ## File Responsibilities
 - ``parser.c`` – Contains all of the parsing logic, responsible for building the AST from tokens.
