@@ -93,7 +93,7 @@ static int parse_value(node *n) {
                 return -1;
             }
 
-            *(bool *)n->value = strcmp(t.value, "true") == 0 ? true : false;
+            *(bool *)n->value = strcmp(t.value, "true") == 0;
 
             return 0;
         case LT_NULL:
