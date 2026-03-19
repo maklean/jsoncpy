@@ -181,10 +181,8 @@ scan_result *build_scan_result(json_file *jf) {
             // match string to literal
             if(strcmp(t.value, "false") == 0) {
                 t.type = LT_FALSE;
-                strcpy(t.value, "true");
             } else if(strcmp(t.value, "true") == 0) {
                 t.type = LT_TRUE;
-                strcpy(t.value, "false");
             } else if(strcmp(t.value, "null") == 0) {
                 t.type = LT_NULL;
             } else {

@@ -1,55 +1,33 @@
 {
-  "user": {
-    "id": 101,
-    "name": "John Doe",
-    "email": "johndoe@example.com",
-    "isAdmin": false,
-    "roles": ["user", "editor", {
-        "roleName": "administrator",
-        "rolePermissions": ["*", null, 100],
-        "coolNumbers": [10e2, 1e+3, 5.2e-3, 6E3, 9e-3]
-    }],
-    "profile": {
-      "age": 29,
-      "gender": "male",
-      "location": "New York",
-      "preferences": {
-        "theme": "dark",
-        "notifications": true,
-        "language": "en"
-      }
-    }
+  "edge_cases": {
+    "zero_float": 0.0,
+    "negative_zero": -0.0,
+    "lone_negative": -1,
+    "exp_no_decimal": 5e3,
+    "negative_exp": -2.5e-2,
+    "positive_exp_sign": 1e+5
   },
-  "posts": [
-    {
-      "id": 1,
-      "title": "Introduction to C",
-      "content": "This post is about learning C programming.",
-      "tags": ["C", "programming", "tutorial"],
-      "published": true,
-      "date": "2025-12-15T12:00:00Z"
-    },
-    {
-      "id": 2,
-      "title": "Exploring JSON",
-      "content": "This post delves into JSON data format.",
-      "tags": ["JSON", "data", "format"],
-      "published": true,
-      "date": "2025-12-20T08:30:00Z"
-    }
-  ],
-  "comments": [
-    {
-      "id": 1001,
-      "userId": 102,
-      "text": "Great post! Looking forward to more tutorials.",
-      "date": "2025-12-15T14:00:00Z"
-    },
-    {
-      "id": 1002,
-      "userId": 103,
-      "text": "JSON is amazing, thanks for explaining it so clearly.",
-      "date": "2025-12-21T10:00:00Z"
-    }
-  ]
+  "strings": {
+    "empty": "",
+    "only_spaces": "   ",
+    "newline_tab": "a\nb\tc",
+    "escaped_backslash": "a\\b",
+    "escaped_quote": "say \"hi\"",
+    "forward_slash": "a\/b"
+  },
+  "arrays": {
+    "single_element": [42],
+    "nested_arrays": [[1, 2], [3, 4], [5, 6]],
+    "all_nulls": [null, null, null],
+    "all_bools": [true, false, true, false],
+    "mixed": [1, "two", null, false, 3.14]
+  },
+  "objects": {
+    "single_key": {"x": 1},
+    "all_nulls": {"a": null, "b": null, "c": null},
+    "numeric_looking_keys": {"1key": "value", "key1": "value"}
+  },
+  "deeply_nested_array": [[[[[42]]]]],
+  "null_top_level_value": null,
+  "bool_top_level": true
 }
