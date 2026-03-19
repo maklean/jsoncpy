@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -O2
+CFLAGS = -Wall -Werror -O2
 TARGET = jsoncpy
 
 SRCDIR = src
