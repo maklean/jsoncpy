@@ -10,121 +10,121 @@
 ## Example Output
 The following is the output from the program when given ``assets/test.json``:
 ```
-OBJECT (Length: 3) {
-  KEY: user
+OBJECT (Length: 7) {
+  KEY: edge_cases
     OBJECT (Length: 6) {
-      KEY: id
-        NUMBER (INT): 101
-      KEY: name
-        STRING: "John Doe"
-      KEY: email
-        STRING: "johndoe@example.com"
-      KEY: isAdmin
-        BOOLEAN: true
-      KEY: roles
-        ARRAY (Length: 3) [
-            STRING: "user"
-            STRING: "editor"
-            OBJECT (Length: 3) {
-              KEY: roleName
-                STRING: "administrator"
-              KEY: rolePermissions
-                ARRAY (Length: 3) [
-                    STRING: "*"
-                    NULL
-                    NUMBER (INT): 100
-                ]
-              KEY: coolNumbers
-                ARRAY (Length: 5) [
-                    NUMBER (FLOAT): 1000
-                    NUMBER (FLOAT): 1000
-                    NUMBER (FLOAT): 0.0051999999999999998
-                    NUMBER (FLOAT): 6000
-                    NUMBER (FLOAT): 0.0089999999999999993
-                ]
-            }
+      KEY: zero_float
+        NUMBER (FLOAT): 0
+      KEY: negative_zero
+        NUMBER (FLOAT): -0
+      KEY: lone_negative
+        NUMBER (INT): -1
+      KEY: exp_no_decimal
+        NUMBER (FLOAT): 5000
+      KEY: negative_exp
+        NUMBER (FLOAT): -0.025000000000000001
+      KEY: positive_exp_sign
+        NUMBER (FLOAT): 100000
+    }
+  KEY: strings
+    OBJECT (Length: 6) {
+      KEY: empty
+        STRING: ""
+      KEY: only_spaces
+        STRING: "   "
+      KEY: newline_tab
+        STRING: "a
+b	c"
+      KEY: escaped_backslash
+        STRING: "a\b"
+      KEY: escaped_quote
+        STRING: "say "hi""
+      KEY: forward_slash
+        STRING: "a/b"
+    }
+  KEY: arrays
+    OBJECT (Length: 5) {
+      KEY: single_element
+        ARRAY (Length: 1) [
+            NUMBER (INT): 42
         ]
-      KEY: profile
-        OBJECT (Length: 4) {
-          KEY: age
-            NUMBER (INT): 29
-          KEY: gender
-            STRING: "male"
-          KEY: location
-            STRING: "New York"
-          KEY: preferences
-            OBJECT (Length: 3) {
-              KEY: theme
-                STRING: "dark"
-              KEY: notifications
-                BOOLEAN: false
-              KEY: language
-                STRING: "en"
-            }
+      KEY: nested_arrays
+        ARRAY (Length: 3) [
+            ARRAY (Length: 2) [
+                NUMBER (INT): 1
+                NUMBER (INT): 2
+            ]
+            ARRAY (Length: 2) [
+                NUMBER (INT): 3
+                NUMBER (INT): 4
+            ]
+            ARRAY (Length: 2) [
+                NUMBER (INT): 5
+                NUMBER (INT): 6
+            ]
+        ]
+      KEY: all_nulls
+        ARRAY (Length: 3) [
+            NULL
+            NULL
+            NULL
+        ]
+      KEY: all_bools
+        ARRAY (Length: 4) [
+            BOOLEAN: true
+            BOOLEAN: false
+            BOOLEAN: true
+            BOOLEAN: false
+        ]
+      KEY: mixed
+        ARRAY (Length: 5) [
+            NUMBER (INT): 1
+            STRING: "two"
+            NULL
+            BOOLEAN: false
+            NUMBER (FLOAT): 3.1400000000000001
+        ]
+    }
+  KEY: objects
+    OBJECT (Length: 3) {
+      KEY: single_key
+        OBJECT (Length: 1) {
+          KEY: x
+            NUMBER (INT): 1
+        }
+      KEY: all_nulls
+        OBJECT (Length: 3) {
+          KEY: a
+            NULL
+          KEY: b
+            NULL
+          KEY: c
+            NULL
+        }
+      KEY: numeric_looking_keys
+        OBJECT (Length: 2) {
+          KEY: 1key
+            STRING: "value"
+          KEY: key1
+            STRING: "value"
         }
     }
-  KEY: posts
-    ARRAY (Length: 2) [
-        OBJECT (Length: 6) {
-          KEY: id
-            NUMBER (INT): 1
-          KEY: title
-            STRING: "Introduction to C"
-          KEY: content
-            STRING: "This post is about learning C programming."
-          KEY: tags
-            ARRAY (Length: 3) [
-                STRING: "C"
-                STRING: "programming"
-                STRING: "tutorial"
+  KEY: deeply_nested_array
+    ARRAY (Length: 1) [
+        ARRAY (Length: 1) [
+            ARRAY (Length: 1) [
+                ARRAY (Length: 1) [
+                    ARRAY (Length: 1) [
+                        NUMBER (INT): 42
+                    ]
+                ]
             ]
-          KEY: published
-            BOOLEAN: false
-          KEY: date
-            STRING: "2025-12-15T12:00:00Z"
-        }
-        OBJECT (Length: 6) {
-          KEY: id
-            NUMBER (INT): 2
-          KEY: title
-            STRING: "Exploring JSON"
-          KEY: content
-            STRING: "This post delves into JSON data format."
-          KEY: tags
-            ARRAY (Length: 3) [
-                STRING: "JSON"
-                STRING: "data"
-                STRING: "format"
-            ]
-          KEY: published
-            BOOLEAN: false
-          KEY: date
-            STRING: "2025-12-20T08:30:00Z"
-        }
+        ]
     ]
-  KEY: comments
-    ARRAY (Length: 2) [
-        OBJECT (Length: 4) {
-          KEY: id
-            NUMBER (INT): 1001
-          KEY: userId
-            NUMBER (INT): 102
-          KEY: text
-            STRING: "Great post! Looking forward to more tutorials."
-          KEY: date
-            STRING: "2025-12-15T14:00:00Z"
-        }
-        OBJECT (Length: 4) {
-          KEY: id
-            NUMBER (INT): 1002
-          KEY: userId
-            NUMBER (INT): 103
-          KEY: text
-            STRING: "JSON is amazing, thanks for explaining it so clearly."
-          KEY: date
-            STRING: "2025-12-21T10:00:00Z"
-        }
-    ]
+  KEY: null_top_level_value
+    NULL
+  KEY: bool_top_level
+    BOOLEAN: true
 }
 ```
 

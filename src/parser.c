@@ -69,7 +69,7 @@ static int parse_value(node *n) {
         case NUMBER: 
             int is_float = strchr(t.value, '.') != NULL || strchr(t.value, 'e') != NULL || strchr(t.value, 'E') != NULL; // need to use strtod() to parse E-notation
             n->type = is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT;
-            n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(int));
+            n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(long));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -79,7 +79,7 @@ static int parse_value(node *n) {
             if(n->type == NODE_NUMBER_FLOAT) {
                 *(double *)n->value = strtod(t.value, NULL);
             } else {
-                *(int *)n->value = atoi(t.value);
+                *(long *)n->value = atol(t.value);
             }
             
             return 0;

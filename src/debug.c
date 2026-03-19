@@ -43,7 +43,7 @@ void debug_node_tree(node *n, int depth) {
             printf("STRING: \"%s\"\n", (char *)n->value);
             break;
         case NODE_NUMBER_INT:
-            printf("NUMBER (INT): %d\n", *(int *)n->value);
+            printf("NUMBER (INT): %ld\n", *(long *)n->value);
             break;
         case NODE_NUMBER_FLOAT:
             printf("NUMBER (FLOAT): %.17g\n", *(double *)n->value);
