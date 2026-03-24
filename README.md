@@ -152,4 +152,5 @@ make
 - [X] Check for duplicate object keys
 - [X] Use arena allocator to make freeing memory easier.
 - [ ] Add a query language to traverse the AST.
+- [ ] Include line number and column in error messages.
 
