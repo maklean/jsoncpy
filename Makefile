@@ -4,7 +4,7 @@ TARGET = jsoncpy
 
 SRCDIR = src
 OBJDIR = build
-OBJS = $(addprefix $(OBJDIR)/,debug.o main.o parser.o scanner.o utils.o)
+OBJS = $(addprefix $(OBJDIR)/,debug.o arena.o main.o parser.o scanner.o utils.o)
 
 all: $(TARGET)
 

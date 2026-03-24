@@ -2,9 +2,12 @@
 #include "include/parser.h"
 #include "include/debug.h"
 #include "include/utils.h"
+#include "include/arena.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+ArenaBlock* block = NULL;
 
 int main(int argc, char *argv[]) {
     if(argc < 2) {
@@ -14,21 +17,27 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    arena_init(&block, 0);
+    if(block == NULL) {
+        fprintf(stderr, "Failed to allocate arena block.\n");
+        exit(EXIT_FAILURE);
+    }
+
     scan_result *sr = scan(argv[1]);
     if(!sr) {
+        arena_clean(&block);
         exit(EXIT_FAILURE);
     }
 
     node *root = parse(sr);
     if(!root) {
-        free_scan_result(sr);
+        arena_clean(&block);
         exit(EXIT_FAILURE);
     }
 
     debug_node_tree(root, 0);
 
-    free_scan_result(sr);
-    free_node_ast(root);
+    arena_clean(&block);
     
     return 0;
 }

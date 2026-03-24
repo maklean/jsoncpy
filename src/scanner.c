@@ -1,11 +1,14 @@
 #include "include/scanner.h"
 #include "include/debug.h"
 #include "include/utils.h"
+#include "include/arena.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdbool.h>
+
+extern ArenaBlock* block;
 
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
@@ -34,7 +37,6 @@ scan_result *scan(const char *json_file_dir) {
 
     scan_result *sr = build_scan_result(jf);
     if(!sr) {
-        free_json_file(jf);
         return NULL;
     }
 
@@ -129,7 +131,6 @@ scan_result *build_scan_result(json_file *jf) {
                     if(seen_decimal || seen_exp) {
                         t.value[j] = '\0';
                         fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
-                        if(tokens) free(tokens);
                         return NULL;
                     }
 
@@ -137,13 +138,11 @@ scan_result *build_scan_result(json_file *jf) {
                 } else if(jf->content[i] == '-' && j != 0 && tolower(jf->content[i-1]) != 'e') { // negative should only be at the start of the number or next to an e
                     t.value[j] = '\0';
                     fprintf(stderr, "Invalid Negation Postion: %s%c <---\n", t.value, jf->content[i]);
-                    if(tokens) free(tokens);
                     return NULL;
                 } else if(tolower(jf->content[i]) == 'e') {
                     if(seen_exp) {
                         t.value[j] = '\0';
                         fprintf(stderr, "Invalid Number: %s%c <---\n", t.value, jf->content[i]);
-                        if(tokens) free(tokens);
                         return NULL;
                     }
 
@@ -151,7 +150,6 @@ scan_result *build_scan_result(json_file *jf) {
                 } else if(jf->content[i] == '+' && (!(jf->content[i-1]) || tolower(jf->content[i-1]) != 'e')) { // plus can only be next to an e
                     t.value[j] = '\0';
                     fprintf(stderr, "Invalid Number (invalid plus position): %s%c <---\n", t.value, jf->content[i]);
-                    if(tokens) free(tokens);
                     return NULL;
                 }
 
@@ -165,7 +163,6 @@ scan_result *build_scan_result(json_file *jf) {
             // stop invalid last decimal or e position, and leading zeros
             if(t.value[j-1] == '.' || tolower(t.value[j-1]) == 'e' || (t.value[0] == '0' && j > 2 && t.value[1] != '.')) {
                 fprintf(stderr, "Invalid Number: %s <---\n", t.value);
-                if(tokens) free(tokens);
                 return NULL;
             }
 
@@ -190,7 +187,6 @@ scan_result *build_scan_result(json_file *jf) {
                 t.type = LT_NULL;
             } else {
                 fprintf(stderr, "Invalid identifier: '%s'.\n", t.value);
-                if(tokens) free(tokens);
                 return NULL;
             }
 
@@ -200,7 +196,6 @@ scan_result *build_scan_result(json_file *jf) {
             // only characters that should be in random places are whitespaces, newlines and carriage returns
             if(c != ' ' && c != '\n' && c != '\r') {
                 fprintf(stderr, "Invalid character found: %c.\n", c);
-                if(tokens) free(tokens);
                 return NULL;
             }
 
@@ -209,10 +204,9 @@ scan_result *build_scan_result(json_file *jf) {
         }
 
         // resize array to accommodate new token
-        tmp_tokens = realloc(tokens, sizeof(token) * (token_count + 1));
+        tmp_tokens = arena_resize(&block, tokens, sizeof(token)*token_count, sizeof(token)*(token_count + 1));
         if(!tmp_tokens) {
             perror("Failed to reallocate memory for tokens array");
-            free(tokens);
             return NULL;
         }
 
@@ -222,10 +216,9 @@ scan_result *build_scan_result(json_file *jf) {
         if(should_inc) i++;
     }
 
-    scan_result *sr = calloc(1, sizeof(scan_result));
+    scan_result *sr = arena_alloc(&block, sizeof(scan_result));
     if(!sr) {
         perror("Failed to allocate for scan_result struct object");
-        if(tokens) free(tokens);
         return NULL;
     }
 
@@ -248,7 +241,7 @@ json_file *get_json_file(const char *dir) {
     size_t file_length = ftell(fptr);
     rewind(fptr);
 
-    char *content = malloc(file_length+1);
+    char *content = arena_alloc(&block, file_length+1);
     if(!content) {
         perror("Failed to allocate for JSON file content");
         fclose(fptr);
@@ -269,10 +262,9 @@ json_file *get_json_file(const char *dir) {
     fclose(fptr);
 
     // create json_file struct object
-    json_file *jf = malloc(sizeof(json_file));
+    json_file *jf = arena_alloc(&block, sizeof(json_file));
     if(!jf) {
         perror("Failed to allocate for json_file struct object");
-        free(content);
         return NULL;
     }
 

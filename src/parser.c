@@ -1,9 +1,12 @@
 #include "include/parser.h"
 #include "include/utils.h"
+#include "include/arena.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+extern ArenaBlock* block;
 
 // Parses the next token into node 'n', returns 0 if successful, otherwise -1.
 static int parse_value(node *n);
@@ -15,10 +18,7 @@ static int parse_object(node *n);
 static int parse_array(node *n);
 
 // Checks whether 'str' exists in the string array 'key_arr'.
-static bool exists_in_arr(char *key_arr, size_t length, const char *str);
-
-// Frees the key-value pair array early
-static void free_pair_arr(kv_pair *pairs, size_t length);
+static bool exists_in_arr(const char *key_arr, size_t length, const char *str);
 
 static token *stream = NULL; // array of tokens
 static size_t current; // current token index in 'stream'
@@ -32,14 +32,13 @@ node *parse(scan_result *sr) {
     current = 0;
     stream = sr->tokens;
 
-    node *n = malloc(sizeof(node));
+    node *n = arena_alloc(&block, sizeof(node));
     if(!n) {
         perror("Failed to allocate for new node");
         return NULL;
     }
 
     if(parse_value(n) != 0) {
-        free(n);
         return NULL;
     }
 
@@ -57,7 +56,7 @@ static int parse_value(node *n) {
     switch(t.type) {
         case STRING:
             n->type = NODE_STRING;
-            n->value = (char *)malloc(sizeof(t.value));
+            n->value = arena_alloc(&block, sizeof(t.value));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -69,7 +68,7 @@ static int parse_value(node *n) {
         case NUMBER: 
             int is_float = strchr(t.value, '.') != NULL || strchr(t.value, 'e') != NULL || strchr(t.value, 'E') != NULL; // need to use strtod() to parse E-notation
             n->type = is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT;
-            n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(long));
+            n->value = n->type == NODE_NUMBER_FLOAT ? arena_alloc(&block, sizeof(double)) : arena_alloc(&block, sizeof(long));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -86,7 +85,7 @@ static int parse_value(node *n) {
         case LT_TRUE:
         case LT_FALSE:
             n->type = NODE_BOOLEAN;
-            n->value = malloc(sizeof(bool));
+            n->value = arena_alloc(&block, sizeof(bool));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -119,7 +118,14 @@ static int parse_object(node *n) {
         return -1;
     }
     
-    char *key_arr = NULL; // basically a string array, but all stored in one contiguous block of memory instead of storing pointers
+    /*
+        basically a string array, but all stored in one contiguous block 
+        of memory instead of storing pointers.
+
+        it dies at the end of the function so no point allocating it in
+        the arena.
+    */
+    char *key_arr = NULL; 
     char *tmp_key_arr; // for realloc
 
     size_t key_arr_next_i = 0;
@@ -138,9 +144,7 @@ static int parse_object(node *n) {
         if(t.type == STRING) {
             if(key_arr != NULL && key_arr_next_i > 0 && exists_in_arr(key_arr, key_arr_next_i, t.value)) {
                 fprintf(stderr, "Duplicate key '%s' found at character position: %ld\n", t.value, current-1);
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
-
                 return -1;
             }
 
@@ -152,7 +156,6 @@ static int parse_object(node *n) {
             tmp_key_arr = realloc(key_arr, VALUE_STR_BUFFER*(key_arr_next_i+1));
             if(!tmp_key_arr) {
                 perror("Failed to reallocate memory for key array");
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -166,7 +169,6 @@ static int parse_object(node *n) {
             t = stream[++current];
             if(t.type != NAME_SEPARATOR) {
                 fprintf(stderr, "Expected ':' at position %ld, but didn't find it.\n", current-1);
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -174,19 +176,16 @@ static int parse_object(node *n) {
             // parse next token into pair.value
             current++;
 
-            pair.value = malloc(sizeof(node));
+            pair.value = arena_alloc(&block, sizeof(node));
             if(parse_value(pair.value) != 0) {
-                if(pair.value) free_node_ast(pair.value);
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
 
             // add kv_pair into the array
-            tmp_pairs = realloc(pairs, sizeof(kv_pair)*(next_index+1));
+            tmp_pairs = arena_resize(&block, pairs, sizeof(kv_pair)*next_index, sizeof(kv_pair)*(next_index+1));
             if(!tmp_pairs) {
                 perror("Failed to reallocate kv_pair array");
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
@@ -195,7 +194,6 @@ static int parse_object(node *n) {
             pairs[next_index++] = pair;
         } else {
             fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
-            if(pairs) free_pair_arr(pairs, next_index);
             if(key_arr) free(key_arr);
             return -1;
         }
@@ -208,19 +206,15 @@ static int parse_object(node *n) {
             // this is more of a grammar check, this could be omitted and it would still get the complete AST.
             if(t.type == END_OBJECT) {
                 fprintf(stderr, "Expected object key at token position: %ld.\n", current-1);
-                if(pairs) free_pair_arr(pairs, next_index);
                 if(key_arr) free(key_arr);
                 return -1;
             }
         }
     }
 
-    n->value = malloc(sizeof(collection));
+    n->value = arena_alloc(&block, sizeof(collection));
     if(!n->value) {
         perror("Failed to allocate collection for object node value");
-
-        if(pairs) free_pair_arr(pairs, next_index);
-        if(key_arr) free(key_arr);
         return -1;
     }
 
@@ -253,7 +247,6 @@ static int parse_array(node *n) {
             // value seperator should always be at an odd index.
             if(i % 2 != 1) {
                 fprintf(stderr, "Unexpected value seperator at position %ld.\n", current-1);
-                if(arr_elements) free(arr_elements);
                 return -1;
             }
 
@@ -263,7 +256,6 @@ static int parse_array(node *n) {
             // there should be a new value
             if(t.type == END_ARRAY) {
                 fprintf(stderr, "Expected value at position %ld, got end of array.\n", current-1);
-                if(arr_elements) free(arr_elements);
                 return -1;
             }
 
@@ -272,22 +264,19 @@ static int parse_array(node *n) {
             // element should always be at an even index.
             if(i % 2 != 0) {
                 fprintf(stderr, "Unexpected value at position %ld, expected value seperator.\n", current-1);
-                if(arr_elements) free(arr_elements);
                 return -1;
             }
 
             // parse value into arr_val
             node arr_val;
             if(parse_value(&arr_val) != 0) {
-                if(arr_elements) free(arr_elements);
                 return -1;
             }
 
             // add node to arr_elements
-            tmp_arr_elements = realloc(arr_elements, sizeof(node)*(next_index+1));
+            tmp_arr_elements = arena_resize(&block, arr_elements, sizeof(node)*next_index, sizeof(node)*(next_index+1));
             if(!tmp_arr_elements) {
                 perror("Failed to reallocate for arr_elements");
-                if(arr_elements) free(arr_elements);
                 return -1;
             }
 
@@ -299,14 +288,14 @@ static int parse_array(node *n) {
         }
     }
 
-    n->value = malloc(sizeof(collection));
+    n->value = arena_alloc(&block, sizeof(collection));
     ((collection *)n->value)->collection = (void *)arr_elements;
     ((collection *)n->value)->length = next_index;
 
     return 0;
 }
 
-bool exists_in_arr(char *key_arr, size_t length, const char *str) {
+bool exists_in_arr(const char *key_arr, size_t length, const char *str) {
     if(!key_arr) {
         fprintf(stderr, "Invalid key array given.\n");
         return false;
@@ -324,17 +313,4 @@ bool exists_in_arr(char *key_arr, size_t length, const char *str) {
     }
 
     return false;
-}
-
-void free_pair_arr(kv_pair *pairs, size_t length) {
-    if(!pairs) {
-        fprintf(stderr, "Invalid key value pair array given.\n");
-        return;
-    }
-
-    for(size_t i = 0; i < length; i++) {
-        free_node_ast(pairs[i].value);
-    }
-
-    free(pairs);
 }
