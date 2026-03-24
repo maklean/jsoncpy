@@ -150,5 +150,6 @@ make
 - [X] Support scanning exponential numbers (e.g., 2.9e-4)
 - [X] Make a Makefile
 - [X] Check for duplicate object keys
+- [X] Use arena allocator to make freeing memory easier.
 - [ ] Add a query language to traverse the AST.
-- [ ] Use arena allocator to make freeing memory easier.
+
