@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-extern Arena *a;
+extern ArenaBlock* block;
 
 // Returns a json_file struct object for the json file at 'dir'.
 static json_file *get_json_file(const char *dir);
@@ -204,7 +204,7 @@ scan_result *build_scan_result(json_file *jf) {
         }
 
         // resize array to accommodate new token
-        tmp_tokens = arena_resize(a, tokens, sizeof(token)*token_count, sizeof(token)*(token_count + 1));
+        tmp_tokens = arena_resize(&block, tokens, sizeof(token)*token_count, sizeof(token)*(token_count + 1));
         if(!tmp_tokens) {
             perror("Failed to reallocate memory for tokens array");
             return NULL;
@@ -216,7 +216,7 @@ scan_result *build_scan_result(json_file *jf) {
         if(should_inc) i++;
     }
 
-    scan_result *sr = arena_alloc(a, sizeof(scan_result));
+    scan_result *sr = arena_alloc(&block, sizeof(scan_result));
     if(!sr) {
         perror("Failed to allocate for scan_result struct object");
         return NULL;
@@ -241,7 +241,7 @@ json_file *get_json_file(const char *dir) {
     size_t file_length = ftell(fptr);
     rewind(fptr);
 
-    char *content = arena_alloc(a, file_length+1);
+    char *content = arena_alloc(&block, file_length+1);
     if(!content) {
         perror("Failed to allocate for JSON file content");
         fclose(fptr);
@@ -262,7 +262,7 @@ json_file *get_json_file(const char *dir) {
     fclose(fptr);
 
     // create json_file struct object
-    json_file *jf = arena_alloc(a, sizeof(json_file));
+    json_file *jf = arena_alloc(&block, sizeof(json_file));
     if(!jf) {
         perror("Failed to allocate for json_file struct object");
         return NULL;

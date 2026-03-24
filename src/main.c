@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Arena *a;
+ArenaBlock* block = NULL;
 
 int main(int argc, char *argv[]) {
     if(argc < 2) {
@@ -17,27 +17,27 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // mother of god and all unholy programming practices.
-    if((a = arena_init(MAX_ARENA_SIZE_MB * 1024 * 1024)) == NULL) {
-        printf("Failed to initialize arena.\n");
+    arena_init(&block, 0);
+    if(block == NULL) {
+        fprintf(stderr, "Failed to allocate arena block.\n");
         exit(EXIT_FAILURE);
     }
 
     scan_result *sr = scan(argv[1]);
     if(!sr) {
-        arena_free(a);
+        arena_clean(&block);
         exit(EXIT_FAILURE);
     }
 
     node *root = parse(sr);
     if(!root) {
-        arena_free(a);
+        arena_clean(&block);
         exit(EXIT_FAILURE);
     }
 
     debug_node_tree(root, 0);
 
-    arena_free(a);
+    arena_clean(&block);
     
     return 0;
 }

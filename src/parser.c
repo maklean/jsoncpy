@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-extern Arena *a;
+extern ArenaBlock* block;
 
 // Parses the next token into node 'n', returns 0 if successful, otherwise -1.
 static int parse_value(node *n);
@@ -32,7 +32,7 @@ node *parse(scan_result *sr) {
     current = 0;
     stream = sr->tokens;
 
-    node *n = arena_alloc(a, sizeof(node));
+    node *n = arena_alloc(&block, sizeof(node));
     if(!n) {
         perror("Failed to allocate for new node");
         return NULL;
@@ -56,7 +56,7 @@ static int parse_value(node *n) {
     switch(t.type) {
         case STRING:
             n->type = NODE_STRING;
-            n->value = arena_alloc(a, sizeof(t.value));
+            n->value = arena_alloc(&block, sizeof(t.value));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -68,7 +68,7 @@ static int parse_value(node *n) {
         case NUMBER: 
             int is_float = strchr(t.value, '.') != NULL || strchr(t.value, 'e') != NULL || strchr(t.value, 'E') != NULL; // need to use strtod() to parse E-notation
             n->type = is_float ? NODE_NUMBER_FLOAT : NODE_NUMBER_INT;
-            n->value = n->type == NODE_NUMBER_FLOAT ? malloc(sizeof(double)) : malloc(sizeof(long));
+            n->value = n->type == NODE_NUMBER_FLOAT ? arena_alloc(&block, sizeof(double)) : arena_alloc(&block, sizeof(long));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -85,7 +85,7 @@ static int parse_value(node *n) {
         case LT_TRUE:
         case LT_FALSE:
             n->type = NODE_BOOLEAN;
-            n->value = arena_alloc(a, sizeof(bool));
+            n->value = arena_alloc(&block, sizeof(bool));
 
             if(!n->value) {
                 perror("Failed to allocate memory for node value");
@@ -176,14 +176,14 @@ static int parse_object(node *n) {
             // parse next token into pair.value
             current++;
 
-            pair.value = arena_alloc(a, sizeof(node));
+            pair.value = arena_alloc(&block, sizeof(node));
             if(parse_value(pair.value) != 0) {
                 if(key_arr) free(key_arr);
                 return -1;
             }
 
             // add kv_pair into the array
-            tmp_pairs = arena_resize(a, pairs, sizeof(kv_pair)*next_index, sizeof(kv_pair)*(next_index+1));
+            tmp_pairs = arena_resize(&block, pairs, sizeof(kv_pair)*next_index, sizeof(kv_pair)*(next_index+1));
             if(!tmp_pairs) {
                 perror("Failed to reallocate kv_pair array");
                 if(key_arr) free(key_arr);
@@ -212,7 +212,7 @@ static int parse_object(node *n) {
         }
     }
 
-    n->value = arena_alloc(a, sizeof(collection));
+    n->value = arena_alloc(&block, sizeof(collection));
     if(!n->value) {
         perror("Failed to allocate collection for object node value");
         return -1;
@@ -274,7 +274,7 @@ static int parse_array(node *n) {
             }
 
             // add node to arr_elements
-            tmp_arr_elements = arena_resize(a, arr_elements, sizeof(node)*next_index, sizeof(node)*(next_index+1));
+            tmp_arr_elements = arena_resize(&block, arr_elements, sizeof(node)*next_index, sizeof(node)*(next_index+1));
             if(!tmp_arr_elements) {
                 perror("Failed to reallocate for arr_elements");
                 return -1;
@@ -288,7 +288,7 @@ static int parse_array(node *n) {
         }
     }
 
-    n->value = arena_alloc(a, sizeof(collection));
+    n->value = arena_alloc(&block, sizeof(collection));
     ((collection *)n->value)->collection = (void *)arr_elements;
     ((collection *)n->value)->length = next_index;
 

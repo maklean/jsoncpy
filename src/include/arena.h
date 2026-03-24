@@ -3,29 +3,33 @@
 
 #include <stdlib.h>
 
-#define DEFAULT_ALIGNMENT (sizeof(void *) * 2) // 16 bytes on 64 bit systems, 8 bytes on 32 bit systems
-#define MAX_ARENA_SIZE_MB 100 // 100 MB (TODO: add dynamic resizing to arena implementation)
+#define ARENA_DEFAULT_BLOCK_SIZE 256
+#define ARENA_DEFAULT_ALIGNMENT (sizeof(void *) * 2) // 16 bytes on 64 bit systems, 8 bytes on 32 bit systems
 
-typedef struct Arena {
-    unsigned char *buf;
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+typedef struct ArenaBlock ArenaBlock;
+
+struct ArenaBlock {
+    unsigned char* buf;
     size_t buf_len; // total bytes in buffer
-    size_t prev_offset; // relative starting index of the latest allocation
-    size_t curr_offset; // offset ptr into buffer (also, relative ending index of the latest allocation)
-} Arena;
+    size_t prev_offset; // relative starting index in buf of the latest allocation
+    size_t curr_offset; // offset ptr into buffer (also, relative ending index in buf of the latest allocation)
 
-// Creates an arena with a total size of 'buf_len'
-Arena *arena_init(size_t buf_len);
+    ArenaBlock* prev; // the previous arena block before this one
+};
 
-// Allocates 'size' bytes on the arena and returns the pointer to the start of the allocated memory.
-void *arena_alloc(Arena *a, size_t size);
+// Initializes an arena with a buffer size of `max(ARENA_BLOCK_DEFAULT_SIZE, buf_len)`.
+void arena_init(ArenaBlock** block, size_t buf_len);
 
-// Resizes an item on the arena.
-void *arena_resize(Arena *a, void *old_memory, size_t old_size, size_t new_size);
+// Allocates memory on the arena and returns the pointer to the start of the memory.
+void* arena_alloc(ArenaBlock** block, size_t size);
 
-// Resets the entire arena (basically, zeros the offsets)
-int arena_reset(Arena *a);
+// Resizes memory allocated on the arena from `old_size` to `new_size`. Returns the pointer to the new memory.
+void* arena_resize(ArenaBlock** block, void* old_memory, size_t old_size, size_t new_size);
 
-// Deallocates (frees) the entire arena.
-int arena_free(Arena *a);
+// Frees the entire arena from the heap.
+void arena_clean(ArenaBlock** block);
 
 #endif
