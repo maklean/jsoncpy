@@ -167,7 +167,7 @@ static void *arena_resize_align(ArenaBlock** block, void *old_memory, size_t old
 }
 
 static bool arena_address_is_on_block(ArenaBlock* block, void* ptr) {
-    if(block == NULL) {
+    if(block == NULL || ptr == NULL) {
         return false;
     }
 
