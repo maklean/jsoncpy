@@ -6,6 +6,7 @@
 - ``scanner.c`` – Contains all of the scanning/tokenizing logic, converting raw JSON input into tokens.
 - ``utils.c`` – Contains utility functions, such as freeing the AST and printing specific token types.
 - ``debug.c`` – Contains debugging functions for printing the JSON file, scan results, and AST structures.
+- ``arena.c`` – Contains the dynamic linked-list based arena allocator implementation. 
 
 ## Example Output
 The following is the output from the program when given ``assets/test.json``:
