@@ -1,12 +1,23 @@
 # jsoncpy
 ``jsoncpy`` is a JSON compiler frontend built entirely in C. It parses a JSON file and prints its Abstract Syntax Tree (AST). The program takes a single command-line argument: the path to the JSON file. This compiler frontend follows the JSON Grammar defined in [RFC 8259 (Internet Standard)](https://datatracker.ietf.org/doc/html/rfc8259).
 
-## File Responsibilities
-- ``parser.c`` - Contains all of the parsing logic, responsible for building the AST from tokens.
-- ``scanner.c`` - Contains all of the scanning/tokenizing logic, converting raw JSON input into tokens.
-- ``utils.c`` - Contains utility functions, such as freeing the AST and printing specific token types.
-- ``debug.c`` - Contains debugging functions for printing the JSON file, scan results, and AST structures.
-- ``arena.c`` - Contains the dynamic linked-list based arena allocator implementation. 
+## Installation/Running
+
+1. Clone the repository from GitHub and navigate to the project:
+```bash
+git clone https://github.com/maklean/jsoncpy.git
+cd jsoncpy
+```
+
+2. Build the project with the `make` utility:
+```bash
+make
+```
+
+3. Run the project:
+```bash
+./jsoncpy <path-to-json>
+```
 
 ## Example Output
 The following is the output from the program when given ``assets/test.json``:
@@ -127,24 +138,6 @@ b	c"
   KEY: bool_top_level
     BOOLEAN: true
 }
-```
-
-## How To Run
-
-1. Clone the repository from GitHub and navigate to the project:
-```bash
-git clone https://github.com/maklean/jsoncpy.git
-cd jsoncpy
-```
-
-2. Build the project with the `make` utility:
-```bash
-make
-```
-
-3. Run the project:
-```bash
-./jsoncpy <path-to-json>
 ```
 
 ## TODO
