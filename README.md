@@ -2,11 +2,11 @@
 ``jsoncpy`` is a JSON compiler frontend built entirely in C. It parses a JSON file and prints its Abstract Syntax Tree (AST). The program takes a single command-line argument: the path to the JSON file. This compiler frontend follows the JSON Grammar defined in [RFC 8259 (Internet Standard)](https://datatracker.ietf.org/doc/html/rfc8259).
 
 ## File Responsibilities
-- ``parser.c`` – Contains all of the parsing logic, responsible for building the AST from tokens.
-- ``scanner.c`` – Contains all of the scanning/tokenizing logic, converting raw JSON input into tokens.
-- ``utils.c`` – Contains utility functions, such as freeing the AST and printing specific token types.
-- ``debug.c`` – Contains debugging functions for printing the JSON file, scan results, and AST structures.
-- ``arena.c`` – Contains the dynamic linked-list based arena allocator implementation. 
+- ``parser.c`` - Contains all of the parsing logic, responsible for building the AST from tokens.
+- ``scanner.c`` - Contains all of the scanning/tokenizing logic, converting raw JSON input into tokens.
+- ``utils.c`` - Contains utility functions, such as freeing the AST and printing specific token types.
+- ``debug.c`` - Contains debugging functions for printing the JSON file, scan results, and AST structures.
+- ``arena.c`` - Contains the dynamic linked-list based arena allocator implementation. 
 
 ## Example Output
 The following is the output from the program when given ``assets/test.json``:
@@ -152,6 +152,6 @@ make
 - [X] Make a Makefile
 - [X] Check for duplicate object keys
 - [X] Use arena allocator to make freeing memory easier.
-- [ ] Add a query language to traverse the AST.
 - [ ] Include line number and column in error messages.
+- [ ] Add a query language to traverse the AST.
 
